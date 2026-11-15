@@ -29,9 +29,12 @@ USERS = {
 
 with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures.json"), encoding="utf-8") as f:
     data = json.load(f)
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "rules.json"), encoding="utf-8") as f:
+    rules = json.load(f)
 events = []
 cursor_floor = 0
 revision_seq = 1
+rules_unavailable = False
 DATA_SCOPES = {"collection:read", "decks:read", "events:read"}
 
 lock = threading.Lock()
@@ -140,6 +143,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.decks()
         if url.path.startswith(f"{PREFIX}/decks/"):
             return self.deck(url.path[len(f"{PREFIX}/decks/"):])
+        if url.path == f"{PREFIX}/rules":
+            return self.rules()
         if url.path == f"{PREFIX}/changes":
             return self.changes({k: v[0] for k, v in parse_qs(url.query).items()})
         if url.path == "/health":
@@ -162,6 +167,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.remove_deck(self.form())
         if url.path == "/mock/touch-collection":
             return self.touch_collection(self.form())
+        if url.path == "/mock/touch-rules":
+            return self.touch_rules()
+        if url.path == "/mock/rules-unavailable":
+            return self.toggle_rules_unavailable()
         if url.path == "/mock/expire-cursors":
             return self.expire_cursors()
         self.api_error(404, "not_found")
@@ -327,6 +336,28 @@ class Handler(BaseHTTPRequestHandler):
         if found is None:
             return self.api_error(404, "not_found")
         self.send_json(200, {"contract_version": CONTRACT_VERSION, "subject": family["subject"], "deck": found})
+
+    def rules(self):
+        if not self.bearer_family(set()):
+            return
+        if rules_unavailable:
+            return self.api_error(503, "temporarily_unavailable")
+        with lock:
+            payload = copy.deepcopy(rules)
+        self.send_json(200, {"contract_version": CONTRACT_VERSION, **payload})
+
+    def toggle_rules_unavailable(self):
+        global rules_unavailable
+        rules_unavailable = not rules_unavailable
+        self.send_json(200, {"rules_unavailable": rules_unavailable})
+
+    def touch_rules(self):
+        with lock:
+            rules["revision"] = f"mock-{secrets.token_hex(4)}"
+            rules["updated_at"] = now_iso()
+            for subject in USERS:
+                self.emit(subject, "rules.changed", "rules", rules["revision"])
+        self.send_json(200, {"revision": rules["revision"]})
 
     def changes(self, query):
         family = self.bearer_family({"events:read"})

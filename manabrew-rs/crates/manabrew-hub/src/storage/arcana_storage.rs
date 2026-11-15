@@ -64,6 +64,15 @@ const ARCANA_MIGRATIONS: &[(i64, &str)] = &[
         last_error      TEXT
     );",
     ),
+    (
+        4,
+        "CREATE TABLE arcana_rules (
+        id         INTEGER PRIMARY KEY CHECK (id = 1),
+        revision   TEXT,
+        payload    TEXT,
+        checked_at TEXT NOT NULL
+    );",
+    ),
 ];
 
 #[derive(Debug, Clone)]
@@ -187,7 +196,7 @@ impl Storage {
                 grant.pending_code_hash
             ],
         )?;
-        Ok(())
+        self.request_arcana_sync(grant.account_id)
     }
 
     pub fn bind_arcana_session(&self, code_hash: &str, session_hash: &str) -> SqlResult<()> {
@@ -410,6 +419,43 @@ impl Storage {
             params![account_id, error, retry_at, reset_cursor],
         )?;
         Ok(())
+    }
+
+    pub fn arcana_rules_checked_at(&self) -> SqlResult<Option<String>> {
+        self.conn
+            .query_row(
+                "SELECT checked_at FROM arcana_rules WHERE id = 1",
+                [],
+                |row| row.get(0),
+            )
+            .optional()
+    }
+
+    pub fn record_arcana_rules(
+        &self,
+        rules: Option<(&str, &str)>,
+        checked_at: &str,
+    ) -> SqlResult<()> {
+        let (revision, payload) = rules.unzip();
+        self.conn.execute(
+            "INSERT INTO arcana_rules (id, revision, payload, checked_at) VALUES (1, ?1, ?2, ?3)
+             ON CONFLICT(id) DO UPDATE SET
+                 revision = COALESCE(excluded.revision, revision),
+                 payload = COALESCE(excluded.payload, payload),
+                 checked_at = excluded.checked_at",
+            params![revision, payload, checked_at],
+        )?;
+        Ok(())
+    }
+
+    pub fn arcana_rules(&self) -> SqlResult<Option<String>> {
+        Ok(self
+            .conn
+            .query_row("SELECT payload FROM arcana_rules WHERE id = 1", [], |row| {
+                row.get::<_, Option<String>>(0)
+            })
+            .optional()?
+            .flatten())
     }
 
     pub fn request_arcana_sync(&self, account_id: &str) -> SqlResult<()> {

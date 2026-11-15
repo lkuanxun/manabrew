@@ -24,6 +24,15 @@ const BACKOFF_MAX_SECS: i64 = 600;
 const GRANT_GONE_RETRY_SECS: i64 = 60;
 const TOPIC_COLLECTION: &str = "collection.changed";
 const TOPIC_DECKS: &str = "decks.changed";
+const TOPIC_RULES: &str = "rules.changed";
+const RULES_REFRESH_SECS: i64 = 3600;
+const RULES_LISTS: [&str; 5] = [
+    "duel_banned",
+    "duel_commander_restricted",
+    "commander_banned",
+    "commander_restricted",
+    "game_changers",
+];
 
 enum SyncError {
     GrantGone,
@@ -243,7 +252,8 @@ async fn follow_changes(
     config: &ArcanaConfig,
     target: &ArcanaSyncTarget,
     mut cursor: String,
-) -> Result<(), SyncError> {
+) -> Result<bool, SyncError> {
+    let mut rules_changed = false;
     loop {
         let path = format!(
             "/changes?cursor={}&limit={CHANGES_LIMIT}",
@@ -257,6 +267,7 @@ async fn follow_changes(
             .filter(|event| seen.insert(event.event_id.as_str()))
             .map(|event| event.topic.as_str())
             .collect();
+        rules_changed |= topics.contains(TOPIC_RULES);
         let collection = if topics.contains(TOPIC_COLLECTION) {
             let section: Section = get_json(state, config, &target.grant_id, "/collection").await?;
             Some((section.revision, Value::Array(section.items).to_string()))
@@ -284,7 +295,7 @@ async fn follow_changes(
             .map_err(store_failed)?;
         cursor = page.next_cursor;
         if !page.has_more {
-            return Ok(());
+            return Ok(rules_changed);
         }
     }
 }
@@ -294,13 +305,78 @@ async fn sync_account(
     config: &ArcanaConfig,
     target: &ArcanaSyncTarget,
 ) -> Result<(), SyncError> {
-    match target.cursor.clone() {
-        None => take_snapshot(state, config, target).await,
+    let rules_changed = match target.cursor.clone() {
+        None => {
+            take_snapshot(state, config, target).await?;
+            true
+        }
         Some(cursor) => match follow_changes(state, config, target, cursor).await {
-            Err(SyncError::CursorExpired) => take_snapshot(state, config, target).await,
-            other => other,
+            Err(SyncError::CursorExpired) => {
+                take_snapshot(state, config, target).await?;
+                true
+            }
+            other => other?,
         },
+    };
+    let checked_at = state
+        .storage
+        .lock()
+        .unwrap()
+        .arcana_rules_checked_at()
+        .map_err(store_failed)?;
+    let stale = checked_at.is_none_or(|at| expired(&at, -RULES_REFRESH_SECS));
+    if rules_changed || stale {
+        match fetch_rules(state, config, &target.grant_id).await {
+            Err(SyncError::GrantGone) => return Err(SyncError::GrantGone),
+            Err(SyncError::Failed(detail)) => {
+                tracing::warn!(error = %detail, "arcana rules fetch failed; keeping previous rules");
+                record_rules(state, None)?;
+            }
+            Err(SyncError::CursorExpired | SyncError::RetryAfter(_)) => record_rules(state, None)?,
+            Ok(()) => {}
+        }
     }
+    Ok(())
+}
+
+fn record_rules(state: &AppState, rules: Option<(&str, &str)>) -> Result<(), SyncError> {
+    state
+        .storage
+        .lock()
+        .unwrap()
+        .record_arcana_rules(rules, &now_str())
+        .map_err(store_failed)
+}
+
+async fn fetch_rules(
+    state: &AppState,
+    config: &ArcanaConfig,
+    grant_id: &str,
+) -> Result<(), SyncError> {
+    let response = authorized_get(state, config, grant_id, "/rules").await?;
+    let status = response.status();
+    if status == StatusCode::NOT_FOUND {
+        return record_rules(state, None);
+    }
+    if !status.is_success() {
+        return Err(SyncError::Failed(format!("/rules returned {status}")));
+    }
+    let rules: Value = response
+        .json()
+        .await
+        .map_err(|error| SyncError::Failed(error.to_string()))?;
+    let revision = rules
+        .get("revision")
+        .and_then(Value::as_str)
+        .ok_or_else(|| SyncError::Failed("rules without revision".to_string()))?;
+    let complete = RULES_LISTS
+        .iter()
+        .all(|list| rules.get(*list).is_some_and(Value::is_array))
+        && rules.get("rule_profiles").is_some_and(Value::is_object);
+    if !complete {
+        return Err(SyncError::Failed("incomplete rules".to_string()));
+    }
+    record_rules(state, Some((revision, &rules.to_string())))
 }
 
 fn due(retry_at: Option<&str>) -> bool {
@@ -392,6 +468,16 @@ pub async fn arcana_library_handler(
         "collection": library.collection.as_deref().map(parse_stored),
     }))
     .into_response()
+}
+
+pub async fn arcana_rules_handler(
+    State(state): State<Arc<AppState>>,
+    SessionAccount(_account): SessionAccount,
+) -> Response {
+    match state.storage.lock().unwrap().arcana_rules() {
+        Ok(rules) => Json(rules.as_deref().map(parse_stored)).into_response(),
+        Err(error) => internal_error(error),
+    }
 }
 
 pub async fn arcana_sync_now_handler(

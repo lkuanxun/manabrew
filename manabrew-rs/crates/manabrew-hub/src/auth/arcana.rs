@@ -24,7 +24,7 @@ use crate::storage::{is_unique_violation, ArcanaGrantRow, NewArcanaGrant, NewOAu
 
 mod sync;
 
-pub use sync::{arcana_library_handler, arcana_sync_now_handler, sync_loop};
+pub use sync::{arcana_library_handler, arcana_rules_handler, arcana_sync_now_handler, sync_loop};
 
 pub const PROVIDER_ARCANA: &str = "arcana";
 const SCOPE: &str = "profile collection:read decks:read events:read";
