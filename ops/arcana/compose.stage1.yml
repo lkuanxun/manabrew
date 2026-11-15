@@ -1,0 +1,10 @@
+services:
+  hub:
+    networks:
+      - default
+      - arcana-stage1
+
+networks:
+  arcana-stage1:
+    external: true
+    name: mtg-oauth-stage1_default

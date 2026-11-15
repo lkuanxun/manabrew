@@ -69,6 +69,11 @@ services:
       HUB_DB_PATH: "/var/manabrew/hub/hub.db"
       HUB_PUBLIC_URL: "${WEB_APP_URL:-http://localhost:8780}"
       WEB_APP_URL: "${WEB_APP_URL:-http://localhost:8780}"
+      ARCANA_CLIENT_ID: "${ARCANA_CLIENT_ID:-}"
+      ARCANA_CLIENT_SECRET: "${ARCANA_CLIENT_SECRET:-}"
+      ARCANA_ISSUER: "${ARCANA_ISSUER:-}"
+      ARCANA_AUTHORIZE_URL: "${ARCANA_AUTHORIZE_URL:-}"
+      ARCANA_API_BASE_URL: "${ARCANA_API_BASE_URL:-}"
       RUST_LOG: "manabrew_hub=info"
     volumes:
       - ./ops/hub-data/arcana:/var/manabrew/hub
@@ -99,3 +104,20 @@ services:
     depends_on:
       relay:
         condition: service_healthy
+
+  mock-arcana:
+    profiles:
+      - mock-arcana
+    image: python:3.12-alpine
+    command: ["python", "-I", "/app/mock_arcana.py"]
+    restart: unless-stopped
+    environment:
+      MOCK_ISSUER: "${ARCANA_ISSUER:?ARCANA_ISSUER is required}"
+      MOCK_CLIENT_ID: "${ARCANA_CLIENT_ID:?ARCANA_CLIENT_ID is required}"
+      MOCK_CLIENT_SECRET: "${ARCANA_CLIENT_SECRET:?ARCANA_CLIENT_SECRET is required}"
+      MOCK_REDIRECT_URIS: "${WEB_APP_URL:-http://localhost:8780}/api/auth/callback/arcana"
+      MOCK_ACCESS_TTL: "${MOCK_ACCESS_TTL:-900}"
+    volumes:
+      - ./ops/arcana/mock-arcana:/app:ro
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:8790:8790"
