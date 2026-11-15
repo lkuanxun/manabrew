@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import { Boxes, Layers, Swords, Wand2 } from "lucide-react";
+import { isPlayableFormat } from "@/lib/formats";
 import type { GameFormat } from "@/types/server";
 export type RoomKind = "match" | "limited";
 export type LimitedKind = "draft" | "sealed" | "winston" | "cube";
@@ -12,7 +13,7 @@ export interface LimitedKindMeta {
   description: string;
   enabled: boolean;
 }
-export const FORMATS: {
+const ALL_FORMATS: {
   value: GameFormat;
   label: string;
   description: string;
@@ -88,6 +89,7 @@ export const FORMATS: {
     description: `Play with existing sealed decks. To open packs, choose Limited.`,
   },
 ];
+export const FORMATS = ALL_FORMATS.filter((option) => isPlayableFormat(option.value));
 export const LIMITED_KINDS: LimitedKindMeta[] = [
   {
     value: "draft",

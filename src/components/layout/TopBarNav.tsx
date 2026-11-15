@@ -1,7 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getTopBarNav, isNavDestinationActive } from "./navDestinations";
-import { useAuthStore } from "@/stores/useAuthStore";
 
 interface TopBarNavProps {
   disabled?: boolean;
@@ -10,8 +9,7 @@ interface TopBarNavProps {
 export function TopBarNav({ disabled = false }: TopBarNavProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const signedIn = useAuthStore((state) => state.status === "signedIn");
-  const direct = getTopBarNav(signedIn);
+  const direct = getTopBarNav();
 
   function isActive(to: string) {
     return isNavDestinationActive(to, location.pathname);

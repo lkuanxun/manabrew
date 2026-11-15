@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronDown, Loader2, Sparkles, Swords, Users, Wand2 } from "lucide-react";
+import { Check, ChevronDown, Loader2, Users, Wand2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -112,19 +112,6 @@ export function TableSetupGameCard({
     <section className="rounded-xl border bg-card/85 p-4 backdrop-blur-md">
       <h2 className="text-ui-label font-semibold">The game</h2>
       <div className="mt-3 space-y-4">
-        <div className="flex overflow-hidden rounded-md border">
-          <ModeButton
-            active={kind === "match"}
-            bordered={false}
-            onClick={() => onKindChange("match")}
-          >
-            <Swords className="h-3.5 w-3.5" /> Match
-          </ModeButton>
-          <ModeButton active={kind === "limited"} bordered onClick={() => onKindChange("limited")}>
-            <Sparkles className="h-3.5 w-3.5" /> Limited
-          </ModeButton>
-        </div>
-
         {kind === "limited" && (
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,12rem),1fr))] gap-2">
             {LIMITED_KINDS.map((meta) => (
@@ -380,30 +367,6 @@ export function TableSetupGameCard({
         )}
       </div>
     </section>
-  );
-}
-function ModeButton({
-  active,
-  bordered = false,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  bordered?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <Button
-      type="button"
-      size="sm"
-      variant={active ? "selected" : "ghost"}
-      aria-pressed={active}
-      className={cn("flex-1 rounded-none shadow-none", bordered && "border-l")}
-      onClick={onClick}
-    >
-      {children}
-    </Button>
   );
 }
 function LimitedKindCard({

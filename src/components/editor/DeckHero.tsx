@@ -11,7 +11,7 @@ import { ScryfallImg } from "@/components/ScryfallImg";
 import { FormatBadge } from "@/components/game/FormatBadge";
 import { DeckLabelBadge } from "@/components/deck/DeckLabelBadge";
 import { resolveCoverCard } from "@/components/deck/deckCover.utils";
-import { GAME_FORMATS, getFormat, commanderSlotBadge } from "@/lib/formats";
+import { PLAYABLE_FORMATS, getFormat, commanderSlotBadge } from "@/lib/formats";
 import { PartnerBadge } from "@/components/deck/PartnerBadge";
 import { useDeckStore } from "@/stores/useDeckStore";
 import { PlaymatEditorModal } from "./PlaymatEditorModal";
@@ -154,7 +154,7 @@ export function DeckHero({ onNameCommit }: { onNameCommit: (name: string) => voi
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                {GAME_FORMATS.filter((f) => !f.deckFormat).map((f) => (
+                {PLAYABLE_FORMATS.filter((f) => !f.deckFormat).map((f) => (
                   <DropdownMenuItem
                     key={f.id}
                     onSelect={() => setDeckFormat(f.id as DeckFormat)}

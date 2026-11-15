@@ -20,8 +20,9 @@ const TABS = [
     label: `Limited`,
     hint: `Draft & sealed`,
     icon: Boxes,
+    hidden: true,
   },
-];
+].filter((tab) => !tab.hidden);
 export function OfflinePlayShell({ children }: OfflinePlayShellProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -29,21 +30,23 @@ export function OfflinePlayShell({ children }: OfflinePlayShellProps) {
   const isTouch = useIsTouch();
   const compact = shortScreen && isTouch;
 
-  const modeToggle = compact ? (
-    <AppSelect
-      aria-label="Offline play mode"
-      value={location.pathname}
-      onValueChange={(value) => navigate(value, { replace: true })}
-      className="min-h-11 shrink-0 text-ui-label font-medium"
-    >
-      {TABS.map(({ to, label, icon: Icon }) => (
-        <AppSelectOption key={to} value={to}>
-          <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-          {label}
-        </AppSelectOption>
-      ))}
-    </AppSelect>
-  ) : null;
+  const showTabs = TABS.length > 1;
+  const modeToggle =
+    compact && showTabs ? (
+      <AppSelect
+        aria-label="Offline play mode"
+        value={location.pathname}
+        onValueChange={(value) => navigate(value, { replace: true })}
+        className="min-h-11 shrink-0 text-ui-label font-medium"
+      >
+        {TABS.map(({ to, label, icon: Icon }) => (
+          <AppSelectOption key={to} value={to}>
+            <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {label}
+          </AppSelectOption>
+        ))}
+      </AppSelect>
+    ) : null;
   const renderTabs = () => (
     <div
       className={cn(
@@ -98,7 +101,7 @@ export function OfflinePlayShell({ children }: OfflinePlayShellProps) {
   return (
     <div className="relative h-full min-h-0 overflow-hidden">
       <div className="relative z-10 flex h-full min-h-0 flex-col">
-        {!compact && (
+        {!compact && showTabs && (
           <nav aria-label="Offline play type" className="shrink-0 px-4 pt-4 sm:px-6 lg:px-8">
             {renderTabs()}
           </nav>

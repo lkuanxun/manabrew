@@ -1,20 +1,8 @@
 import type { ComponentType } from "react";
-import {
-  Github,
-  HeartPulse,
-  Info,
-  Layers,
-  LibraryBig,
-  PackageOpen,
-  Palette,
-  Search,
-  Swords,
-  Users,
-} from "lucide-react";
-import { DiscordIcon } from "@/components/icons/DiscordIcon";
+import { Info, Layers, LibraryBig, Palette, Swords, Users } from "lucide-react";
 import { DESIGN_SYSTEM_ENABLED } from "@/config/designSystem";
 import { isFeatureEnabled } from "@/featureFlags";
-import { DISCORD_INVITE_URL, GITHUB_REPO_URL, ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants";
 export interface NavDestination {
   to: string;
   label: string;
@@ -46,7 +34,7 @@ export function isNavDestinationActive(to: string, pathname: string): boolean {
   }
   return pathname === to || pathname.startsWith(`${to}/`);
 }
-export function getTopBarNav(signedIn = false): NavDestination[] {
+export function getTopBarNav(): NavDestination[] {
   const direct: NavDestination[] = [
     { to: ROUTES.PLAY_OFFLINE_CONSTRUCTED, label: `Singleplayer`, icon: Swords },
     { to: ROUTES.LOBBY, label: `Multiplayer`, icon: Users },
@@ -55,17 +43,6 @@ export function getTopBarNav(signedIn = false): NavDestination[] {
   if (isFeatureEnabled("deckHub")) {
     direct.push({ to: ROUTES.HUB, label: `Community`, icon: LibraryBig });
   }
-  if (signedIn && isFeatureEnabled("accounts")) {
-    direct.push({
-      to: ROUTES.MY_COLLECTION,
-      label: `My Collection`,
-      icon: PackageOpen,
-    });
-  }
-  direct.push(
-    { to: ROUTES.SEARCH, label: `Card Search`, icon: Search },
-    { to: ROUTES.COMPANION, label: `Life Tracker`, icon: HeartPulse },
-  );
   return direct;
 }
 export function getMoreDestinations(): NavDestination[] {
@@ -73,19 +50,5 @@ export function getMoreDestinations(): NavDestination[] {
   if (DESIGN_SYSTEM_ENABLED) {
     more.push({ to: ROUTES.DESIGN_SYSTEM, label: `Design System`, icon: Palette });
   }
-  more.push(
-    {
-      to: DISCORD_INVITE_URL,
-      label: `Discord`,
-      icon: DiscordIcon,
-      external: true,
-    },
-    {
-      to: GITHUB_REPO_URL,
-      label: `GitHub`,
-      icon: Github,
-      external: true,
-    },
-  );
   return more;
 }

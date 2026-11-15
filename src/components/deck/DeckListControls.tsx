@@ -9,7 +9,7 @@ import {
 import { FormatBadge } from "@/components/game/FormatBadge";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, Palette, Search, X } from "lucide-react";
-import { GAME_FORMATS } from "@/lib/formats";
+import { PLAYABLE_FORMATS } from "@/lib/formats";
 import type { SortBy } from "@/views/myDecks.utils";
 import { MANA_LETTERS, type ManaLetter } from "@/themes/gameTheme";
 import { manaSymbolUrl } from "@/api/scryfall";
@@ -133,7 +133,7 @@ export function DeckListControls({
               <span>All formats</span>
               {!formatFilter && <Check className="ml-auto h-3 w-3 text-primary" />}
             </DropdownMenuItem>
-            {GAME_FORMATS.filter((format) => !format.deckFormat).map((format) => (
+            {PLAYABLE_FORMATS.filter((format) => !format.deckFormat).map((format) => (
               <DropdownMenuItem
                 key={format.id}
                 onSelect={() => onFormatChange(format.id)}

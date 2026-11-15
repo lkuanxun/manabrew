@@ -11,8 +11,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { isPlayableFormat } from "@/lib/formats";
 import type { GameFormat, RoomInfo } from "@/types/server";
-const HOST_SELECTABLE_FORMATS: GameFormat[] = [
+const ALL_HOST_FORMATS: GameFormat[] = [
   "Standard",
   "Pioneer",
   "Modern",
@@ -28,6 +29,7 @@ const HOST_SELECTABLE_FORMATS: GameFormat[] = [
   "Draft",
   "Sealed",
 ];
+const HOST_SELECTABLE_FORMATS = ALL_HOST_FORMATS.filter(isPlayableFormat);
 const PLAYER_COUNT_OPTIONS = [2, 3, 4];
 const MULTIPLAYER_FORMATS: GameFormat[] = ["Commander", "PauperCommander", "Brawl", "Oathbreaker"];
 interface TableRoomSidebarProps {

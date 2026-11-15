@@ -13,6 +13,7 @@ import { isFeatureEnabled } from "@/featureFlags";
 import { useAccountDecks } from "@/hooks/useAccountDecks";
 import { useOwnedDecks } from "@/hooks/useOwnedDecks";
 import { DEFAULT_DECK_NAME, ROUTES } from "@/lib/constants";
+import { isPlayableFormat } from "@/lib/formats";
 import { availableEngines } from "@/lib/engines";
 import { presetSupportsEngine, type PresetDeck } from "@/lib/presetDecks";
 import { useDeckStore } from "@/stores/useDeckStore";
@@ -64,6 +65,7 @@ export function PlayDeckShelf({
   );
   const visiblePresets = presetDecks.filter(
     (preset) =>
+      isPlayableFormat(preset.format ?? "standard") &&
       !forkedPresetKeys.has((preset.id ?? "").toLowerCase()) &&
       availableEngines().some((engine) => presetSupportsEngine(preset, engine)),
   );

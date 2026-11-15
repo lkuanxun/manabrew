@@ -340,6 +340,11 @@ export const GAME_FORMATS: GameFormat[] = [
     bannedCards: [],
   },
 ];
+const PLAYABLE_FORMAT_IDS = new Set(["commander", "duelcommander"]);
+export function isPlayableFormat(id: string): boolean {
+  return PLAYABLE_FORMAT_IDS.has(id.toLowerCase());
+}
+export const PLAYABLE_FORMATS = GAME_FORMATS.filter((format) => isPlayableFormat(format.id));
 export interface DeckValidation {
   legal: boolean;
   errors: string[];

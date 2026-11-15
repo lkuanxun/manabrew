@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { FormatPicker } from "@/components/lobby/FormatPicker";
-import { GAME_FORMATS } from "@/lib/formats";
+import { GAME_FORMATS, isPlayableFormat } from "@/lib/formats";
 import type { GameFormat, RoomInfo } from "@/types/server";
 const SELECTABLE_FORMATS: GameFormat[] = [
   "Standard",
@@ -11,14 +11,15 @@ const SELECTABLE_FORMATS: GameFormat[] = [
   "Pauper",
   "Premodern",
   "Commander",
+  "DuelCommander",
   "PauperCommander",
   "Brawl",
   "Oathbreaker",
   "Draft",
   "Sealed",
 ];
-const PICKER_FORMATS = GAME_FORMATS.filter((f) =>
-  SELECTABLE_FORMATS.some((s) => s.toLowerCase() === f.id),
+const PICKER_FORMATS = GAME_FORMATS.filter(
+  (f) => isPlayableFormat(f.id) && SELECTABLE_FORMATS.some((s) => s.toLowerCase() === f.id),
 ).map((format) =>
   format.id === "draft" || format.id === "sealed"
     ? {

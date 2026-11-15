@@ -28,6 +28,7 @@ import { useForgeRoomAvailabilityStore } from "@/stores/useForgeRoomAvailability
 import { getPlatformType } from "@/platform";
 import { claimHostedTable } from "@/game/hostedAiPlay";
 import { isFeatureEnabled } from "@/featureFlags";
+import { isPlayableFormat } from "@/lib/formats";
 import { forgeWasmNeedsValidation, useForgeWasmHostingEnabled } from "@/lib/forgeWasm";
 import { validateForgeWasm } from "@/game/forgeWasmValidation";
 import { cn } from "@/lib/utils";
@@ -58,15 +59,14 @@ export function TableSetup({ username, onClose, onCreatingChange }: TableSetupPr
   const hostedNode = !isTauri && !forgeWasm;
   const canHostForge = (isTauri && forgeRoomAvailable) || forgeWasm || hostedNode;
   const [engine, setEngine] = useState<EngineKind>(canHostForge ? "Forge" : "Manabrew");
-  const [kind, setKind] = useState<RoomKind>(
-    () => usePreferencesStore.getState().lastRoomSetup?.kind ?? "match",
-  );
+  const [kind, setKind] = useState<RoomKind>("match");
   const [limitedKind, setLimitedKind] = useState<LimitedKind>(
     () => usePreferencesStore.getState().lastRoomSetup?.limitedKind ?? "draft",
   );
-  const [format, setFormat] = useState<GameFormat>(
-    () => usePreferencesStore.getState().lastRoomSetup?.format ?? "Commander",
-  );
+  const [format, setFormat] = useState<GameFormat>(() => {
+    const last = usePreferencesStore.getState().lastRoomSetup?.format;
+    return last && isPlayableFormat(last) ? last : "Commander";
+  });
   const [matchPlayersOverride, setMatchPlayersOverride] = useState<number | null>(() => {
     const last = usePreferencesStore.getState().lastRoomSetup;
     return last?.kind === "match" ? last.players : null;

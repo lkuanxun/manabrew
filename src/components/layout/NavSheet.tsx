@@ -11,7 +11,6 @@ import {
   isNavDestinationActive,
   type NavDestination,
 } from "./navDestinations";
-import { useAuthStore } from "@/stores/useAuthStore";
 
 interface NavSheetProps {
   disabled?: boolean;
@@ -21,8 +20,7 @@ export function NavSheet({ disabled = false }: NavSheetProps) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const signedIn = useAuthStore((state) => state.status === "signedIn");
-  const direct = getTopBarNav(signedIn);
+  const direct = getTopBarNav();
   const more = getMoreDestinations();
 
   function isActive(to: string) {

@@ -14,7 +14,7 @@ export const featureFlags = {
   ironsmithRuntime: true,
   // Deck Hub (browse/publish shared decks + top decks). Public browse, play and
   // copy need no session; publishing and favorites also need `accounts`.
-  deckHub: true,
+  deckHub: false,
   // Hub accounts (OAuth + email sign-in, deck ownership). Desktop never uses the
   // `WEB_APP_URL` redirect: an OAuth start with `client: "desktop"` ends on the
   // hub's own code page and the app exchanges the pasted code at

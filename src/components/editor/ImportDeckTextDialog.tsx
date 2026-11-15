@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { DEFAULT_IMPORT_NAME } from "@/lib/constants";
-import { GAME_FORMATS } from "@/lib/formats";
+import { PLAYABLE_FORMATS } from "@/lib/formats";
 import { cn } from "@/lib/utils";
 import {
   isDetectedCommander,
@@ -37,7 +37,7 @@ const GUIDE_STEPS = [
   `Click the ••• menu, then Export.`,
   `Choose "Copy Plain Text" and copy it to your clipboard.`,
 ];
-const IMPORT_FORMATS = GAME_FORMATS.filter(
+const IMPORT_FORMATS = PLAYABLE_FORMATS.filter(
   (format) => format.id !== "oathbreaker" && !format.deckFormat,
 );
 export function ImportDeckTextDialog({
