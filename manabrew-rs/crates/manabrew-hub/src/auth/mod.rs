@@ -8,7 +8,10 @@ pub use account::{
     delete_account_handler, exchange_handler, export_account_handler, logout_handler, me_handler,
     unlink_identity_handler, update_handle_handler,
 };
-pub use arcana::{arcana_callback_handler, arcana_start_handler};
+pub use arcana::{
+    arcana_callback_handler, arcana_library_handler, arcana_start_handler, arcana_sync_now_handler,
+    sync_loop as arcana_sync_loop,
+};
 pub use email::{email_request_handler, email_verify_handler};
 pub use oauth::{oauth_callback_handler, oauth_start_handler};
 #[cfg(test)]

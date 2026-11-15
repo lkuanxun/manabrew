@@ -39,6 +39,31 @@ const ARCANA_MIGRATIONS: &[(i64, &str)] = &[
         value TEXT NOT NULL
     );",
     ),
+    (
+        3,
+        "CREATE TABLE arcana_mirror_decks (
+        account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+        deck_id    TEXT NOT NULL,
+        revision   TEXT NOT NULL,
+        payload    TEXT NOT NULL,
+        synced_at  TEXT NOT NULL,
+        PRIMARY KEY (account_id, deck_id)
+    );
+    CREATE TABLE arcana_mirror_collection (
+        account_id TEXT PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+        revision   TEXT NOT NULL,
+        payload    TEXT NOT NULL,
+        synced_at  TEXT NOT NULL
+    );
+    CREATE TABLE arcana_sync_state (
+        account_id      TEXT PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+        cursor          TEXT,
+        failures        INTEGER NOT NULL DEFAULT 0,
+        retry_at        TEXT,
+        last_success_at TEXT,
+        last_error      TEXT
+    );",
+    ),
 ];
 
 #[derive(Debug, Clone)]
@@ -286,4 +311,166 @@ impl Storage {
             .collect::<SqlResult<Vec<_>>>()?;
         Ok(rows)
     }
+
+    pub fn arcana_sync_targets(&self) -> SqlResult<Vec<ArcanaSyncTarget>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT g.account_id, g.id, s.cursor, s.failures, s.retry_at
+             FROM arcana_grants g
+             LEFT JOIN arcana_sync_state s ON s.account_id = g.account_id
+             WHERE g.authorized_at = (
+                 SELECT MAX(o.authorized_at) FROM arcana_grants o WHERE o.account_id = g.account_id
+             )
+             GROUP BY g.account_id",
+        )?;
+        let rows = stmt
+            .query_map([], |row| {
+                Ok(ArcanaSyncTarget {
+                    account_id: row.get(0)?,
+                    grant_id: row.get(1)?,
+                    cursor: row.get(2)?,
+                    failures: row.get::<_, Option<i64>>(3)?.unwrap_or(0),
+                    retry_at: row.get(4)?,
+                })
+            })?
+            .collect::<SqlResult<Vec<_>>>()?;
+        Ok(rows)
+    }
+
+    pub fn replace_arcana_mirror(
+        &self,
+        account_id: &str,
+        collection: Option<(&str, &str)>,
+        decks: Option<&[(String, String, String)]>,
+        cursor: Option<&str>,
+        now: &str,
+    ) -> SqlResult<()> {
+        let tx = self.conn.unchecked_transaction()?;
+        if let Some((revision, payload)) = collection {
+            tx.execute(
+                "INSERT INTO arcana_mirror_collection (account_id, revision, payload, synced_at)
+                 VALUES (?1, ?2, ?3, ?4)
+                 ON CONFLICT(account_id) DO UPDATE SET
+                     revision = excluded.revision, payload = excluded.payload,
+                     synced_at = excluded.synced_at",
+                params![account_id, revision, payload, now],
+            )?;
+        }
+        if let Some(decks) = decks {
+            tx.execute(
+                "DELETE FROM arcana_mirror_decks WHERE account_id = ?1",
+                params![account_id],
+            )?;
+            for (deck_id, revision, payload) in decks {
+                tx.execute(
+                    "INSERT INTO arcana_mirror_decks (account_id, deck_id, revision, payload, synced_at)
+                     VALUES (?1, ?2, ?3, ?4, ?5)",
+                    params![account_id, deck_id, revision, payload, now],
+                )?;
+            }
+        }
+        tx.execute(
+            "INSERT INTO arcana_sync_state (account_id, cursor, failures, retry_at, last_success_at, last_error)
+             VALUES (?1, ?2, 0, NULL, ?3, NULL)
+             ON CONFLICT(account_id) DO UPDATE SET
+                 cursor = excluded.cursor, failures = 0, retry_at = NULL,
+                 last_success_at = excluded.last_success_at, last_error = NULL",
+            params![account_id, cursor, now],
+        )?;
+        tx.commit()
+    }
+
+    pub fn arcana_mirror_deck_revisions(
+        &self,
+        account_id: &str,
+    ) -> SqlResult<Vec<(String, String, String)>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT deck_id, revision, payload FROM arcana_mirror_decks WHERE account_id = ?1",
+        )?;
+        let rows = stmt
+            .query_map(params![account_id], |row| {
+                Ok((row.get(0)?, row.get(1)?, row.get(2)?))
+            })?
+            .collect::<SqlResult<Vec<_>>>()?;
+        Ok(rows)
+    }
+
+    pub fn record_arcana_sync_failure(
+        &self,
+        account_id: &str,
+        error: &str,
+        retry_at: &str,
+        reset_cursor: bool,
+    ) -> SqlResult<()> {
+        self.conn.execute(
+            "INSERT INTO arcana_sync_state (account_id, cursor, failures, retry_at, last_error)
+             VALUES (?1, NULL, 1, ?3, ?2)
+             ON CONFLICT(account_id) DO UPDATE SET
+                 failures = failures + 1, retry_at = excluded.retry_at, last_error = excluded.last_error,
+                 cursor = CASE WHEN ?4 THEN NULL ELSE cursor END",
+            params![account_id, error, retry_at, reset_cursor],
+        )?;
+        Ok(())
+    }
+
+    pub fn request_arcana_sync(&self, account_id: &str) -> SqlResult<()> {
+        self.conn.execute(
+            "UPDATE arcana_sync_state SET retry_at = NULL WHERE account_id = ?1",
+            params![account_id],
+        )?;
+        Ok(())
+    }
+
+    pub fn arcana_library(&self, account_id: &str) -> SqlResult<ArcanaLibrary> {
+        let mut stmt = self.conn.prepare(
+            "SELECT payload FROM arcana_mirror_decks WHERE account_id = ?1 ORDER BY deck_id",
+        )?;
+        let decks = stmt
+            .query_map(params![account_id], |row| row.get(0))?
+            .collect::<SqlResult<Vec<String>>>()?;
+        let collection = self
+            .conn
+            .query_row(
+                "SELECT payload FROM arcana_mirror_collection WHERE account_id = ?1",
+                params![account_id],
+                |row| row.get(0),
+            )
+            .optional()?;
+        let state = self
+            .conn
+            .query_row(
+                "SELECT last_success_at, last_error FROM arcana_sync_state WHERE account_id = ?1",
+                params![account_id],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .optional()?;
+        let (last_success_at, last_error) = state.unwrap_or((None, None));
+        let linked: bool = self.conn.query_row(
+            "SELECT EXISTS(SELECT 1 FROM arcana_grants WHERE account_id = ?1)",
+            params![account_id],
+            |row| row.get(0),
+        )?;
+        Ok(ArcanaLibrary {
+            decks,
+            collection,
+            last_success_at,
+            last_error,
+            linked,
+        })
+    }
+}
+
+pub struct ArcanaSyncTarget {
+    pub account_id: String,
+    pub grant_id: String,
+    pub cursor: Option<String>,
+    pub failures: i64,
+    pub retry_at: Option<String>,
+}
+
+pub struct ArcanaLibrary {
+    pub decks: Vec<String>,
+    pub collection: Option<String>,
+    pub last_success_at: Option<String>,
+    pub last_error: Option<String>,
+    pub linked: bool,
 }

@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { ImportDeckTextDialog } from "@/components/editor/ImportDeckTextDialog";
 import { NewDeckChoiceDialog } from "@/components/editor/NewDeckChoiceDialog";
 import { useDeckTextImport } from "@/components/editor/useDeckTextImport";
+import { ArcanaDeckShelf } from "@/components/play/ArcanaDeckShelf";
 import { CommunityDeckShelf } from "@/components/play/CommunityDeckShelf";
 import { OwnedDeckShelf } from "@/components/play/OwnedDeckShelf";
 import { PresetDeckShelf } from "@/components/play/PresetDeckShelf";
@@ -144,6 +145,7 @@ export function PlayDeckShelf({
       )}
 
       <div className="space-y-5">
+        <ArcanaDeckShelf />
         <OwnedDeckShelf
           decks={ownedDecks}
           lastPlayedDeckId={lastPlayedDeckId}

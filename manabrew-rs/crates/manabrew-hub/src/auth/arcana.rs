@@ -22,6 +22,10 @@ use crate::config::ArcanaConfig;
 use crate::routes::{generate_token, hash_token, internal_error, AppState};
 use crate::storage::{is_unique_violation, ArcanaGrantRow, NewArcanaGrant, NewOAuthState};
 
+mod sync;
+
+pub use sync::{arcana_library_handler, arcana_sync_now_handler, sync_loop};
+
 pub const PROVIDER_ARCANA: &str = "arcana";
 const SCOPE: &str = "profile collection:read decks:read events:read";
 const BINDING_COOKIE: &str = "manabrew_arcana_binding";

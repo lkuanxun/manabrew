@@ -128,6 +128,7 @@ async fn main() {
         assets: config.assets.as_ref().map(AssetService::new),
     });
     tokio::spawn(scryfall_bulk::refresh_loop(scryfall_bulk, http));
+    tokio::spawn(auth::arcana_sync_loop(Arc::clone(&state)));
     if state.assets.is_some() {
         let sweep_state = Arc::clone(&state);
         tokio::spawn(async move {

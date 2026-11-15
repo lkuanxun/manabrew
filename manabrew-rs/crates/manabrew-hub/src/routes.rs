@@ -183,6 +183,8 @@ pub fn build_router(state: Arc<AppState>) -> Router {
             "/api/auth/callback/arcana",
             get(auth::arcana_callback_handler),
         )
+        .route("/api/arcana/library", get(auth::arcana_library_handler))
+        .route("/api/arcana/sync", post(auth::arcana_sync_now_handler))
         .route("/api/auth/exchange", post(auth::exchange_handler))
         .route("/api/auth/email/request", post(auth::email_request_handler))
         .route("/api/auth/email/verify", post(auth::email_verify_handler))

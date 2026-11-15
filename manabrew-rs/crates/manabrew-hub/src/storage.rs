@@ -17,7 +17,7 @@ use sha2::{Digest, Sha256};
 use crate::preset_decks::PresetDeck;
 
 mod arcana_storage;
-pub use arcana_storage::{ArcanaGrantRow, NewArcanaGrant};
+pub use arcana_storage::{ArcanaGrantRow, ArcanaSyncTarget, NewArcanaGrant};
 
 pub struct ChatReportRow<'a> {
     pub id: &'a str,
