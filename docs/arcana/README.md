@@ -48,7 +48,7 @@ docker compose -f compose.arcana.yml -f ops/arcana/compose.stage1.yml up -d hub
 
 ## 單向同步（Stage C）
 
-Hub 背景每 5 秒同步一次已連結帳號的 Arcana 收藏與牌組，存進獨立的鏡像表，不碰 ManaBrew 自己的 My Decks 和收藏。
+Hub 背景每 5 秒同步一次已連結帳號的 Arcana 收藏與牌組，存進獨立的鏡像表，不碰 ManaBrew 自己的 My Decks 和收藏。My Decks 和 Collection 頁都有「Arcana」切換，可唯讀瀏覽同步來的牌組與收藏；收藏依印刷版本與 finish 合併張數。
 
 Play 首頁的「Arcana decks」區塊會列出鏡像的牌組，按 Play 後才向 Scryfall 補齊卡片並開局。使用者在 Arcana 撤銷授權後，已同步的資料保留，但不再更新。
 
@@ -78,11 +78,11 @@ Game Changer 的上限從 Arcana 回傳的 `rule_profiles` 讀取，不寫死在
 
 ## 透過 Tailscale 給朋友使用
 
-Tailscale Serve 只開放 443、8443、10000 三個 HTTPS 埠，443 由 Arcana 使用。規劃：網頁與 Hub 用 `:8443`，relay 用 `:10000`。relay 位址設成完整網址：`RELAY_HOST=wss://<tailnet 主機>:10000`，這樣前端會直接使用該網址。設定 Serve 前須取得使用者同意。
+Tailscale Serve 只開放 443、8443、10000 三個 HTTPS 埠，443 由 Arcana 使用。規劃：網頁與 Hub 用 `:8443`，relay 用 `:10000`。relay 位址設成完整網址：`RELAY_HOST=wss://<tailnet 主機>:10000`，這樣前端會直接使用該網址。設定 Serve 前須取得使用者同意。接正式 Arcana 的交接與切換步驟見 [stage2-production-handoff.md](stage2-production-handoff.md)；使用者已同意開這兩個入口，於切換時一併開啟。
 
 ## 與上游的差異
 
 - Duel Commander：關閉指揮官傷害判負，不允許備牌。
 - Hub：新增 Arcana 登入（`auth/arcana.rs`，資料表另有版本序列，見 `docs/agents/HUB.md`）。
 - 前端：登入對話框的 Arcana 按鈕。
-- 介面精簡：關閉 Deck Hub（Community）；導覽列只留 Singleplayer、Multiplayer、My Decks；首頁拿掉 Card Search、Life Tracker、My Collection 入口和上游的 Discord、GitHub 連結；隱藏 Limited。頁面仍可用網址開啟。
+- 介面精簡：關閉 Deck Hub（Community）；導覽列只留 Singleplayer、Multiplayer、My Decks、Collection；首頁拿掉 Card Search、Life Tracker、My Collection 入口和上游的 Discord、GitHub 連結；隱藏 Limited。頁面仍可用網址開啟。
