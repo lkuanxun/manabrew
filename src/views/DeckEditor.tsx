@@ -52,6 +52,8 @@ import { applyDeckFilters, presetDeckParamId, PRESET_DECK_ID_PREFIX } from "@/vi
 import type { SortBy } from "@/views/myDecks.utils";
 import { usePresetDecks, usePresetDecksResolved } from "@/stores/usePresetDecksStore";
 import { useQuickPlaytest } from "@/hooks/useQuickPlaytest";
+import { useArcanaLibrary } from "@/hooks/useArcanaLibrary";
+import { ArcanaDeckGrid } from "@/components/deck/ArcanaDeckGrid";
 import { useMyDeckHubEntries } from "@/hooks/useMyDeckHubEntries";
 import { useAccountDecks } from "@/hooks/useAccountDecks";
 import { useAccountDecksStore } from "@/stores/useAccountDecksStore";
@@ -124,6 +126,7 @@ export default function DeckEditor() {
   const presetDecks = usePresetDecks();
   const presetDecksResolved = usePresetDecksResolved();
   const { quickPlaytest } = useQuickPlaytest();
+  const arcana = useArcanaLibrary();
   const {
     entries: publishedDecks,
     loading: publishedDecksLoading,
@@ -235,6 +238,8 @@ export default function DeckEditor() {
   const [deletingAccountDeck, setDeletingAccountDeck] = useState<SavedDeck | null>(null);
   const [deletingAccountBusy, setDeletingAccountBusy] = useState(false);
   const [search, setSearch] = useState("");
+  const [deckSource, setDeckSource] = useState<"mine" | "arcana">("mine");
+  const showArcana = deckSource === "arcana" && arcana.available;
   const [formatFilter, setFormatFilter] = useState("");
   const [colorFilter, setColorFilter] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortBy>("name");
@@ -673,13 +678,36 @@ export default function DeckEditor() {
           <ScrollArea className="min-h-0 min-w-0 flex-1">
             <div className={cn("p-4 sm:px-6 lg:px-8", shortTouch && "py-2 sm:py-2")}>
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="text-ui-label font-semibold uppercase tracking-wide text-muted-foreground">
-                  My decks
-                </span>
-                <span className="text-ui-meta text-muted-foreground">
-                  ({collectionDecks.length})
-                </span>
-                {accountDecksAvailable && accountDecksSignedIn && (
+                {arcana.available ? (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant={showArcana ? "ghost" : "selected"}
+                      size="sm"
+                      aria-pressed={!showArcana}
+                      onClick={() => setDeckSource("mine")}
+                    >
+                      My decks ({collectionDecks.length})
+                    </Button>
+                    <Button
+                      variant={showArcana ? "selected" : "ghost"}
+                      size="sm"
+                      aria-pressed={showArcana}
+                      onClick={() => setDeckSource("arcana")}
+                    >
+                      Arcana ({arcana.library?.decks.length ?? 0})
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <span className="text-ui-label font-semibold uppercase tracking-wide text-muted-foreground">
+                      My decks
+                    </span>
+                    <span className="text-ui-meta text-muted-foreground">
+                      ({collectionDecks.length})
+                    </span>
+                  </>
+                )}
+                {!showArcana && accountDecksAvailable && accountDecksSignedIn && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -696,25 +724,27 @@ export default function DeckEditor() {
                   {accountDecksError}
                 </p>
               )}
-              {(deckCatalogPending ||
-                (accountDecksAvailable &&
-                  accountDecksSignedIn &&
-                  accountDecksLoading &&
-                  collectionDecks.length === 0)) && (
-                <div
-                  className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,16rem),1fr))] gap-3"
-                  aria-label={`Loading your decks`}
-                  aria-busy="true"
-                >
-                  {Array.from({ length: 5 }, (_, index) => (
-                    <div
-                      key={index}
-                      className="aspect-[4/3] animate-pulse rounded-lg border border-border/60 bg-muted/40"
-                    />
-                  ))}
-                </div>
-              )}
-              {!deckCatalogPending && (
+              {!showArcana &&
+                (deckCatalogPending ||
+                  (accountDecksAvailable &&
+                    accountDecksSignedIn &&
+                    accountDecksLoading &&
+                    collectionDecks.length === 0)) && (
+                  <div
+                    className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,16rem),1fr))] gap-3"
+                    aria-label={`Loading your decks`}
+                    aria-busy="true"
+                  >
+                    {Array.from({ length: 5 }, (_, index) => (
+                      <div
+                        key={index}
+                        className="aspect-[4/3] animate-pulse rounded-lg border border-border/60 bg-muted/40"
+                      />
+                    ))}
+                  </div>
+                )}
+              {showArcana && <ArcanaDeckGrid arcana={arcana} />}
+              {!showArcana && !deckCatalogPending && (
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,16rem),1fr))] gap-3">
                   <div className={cn("group relative", compactAddDeck && "col-span-full")}>
                     <button
@@ -740,7 +770,7 @@ export default function DeckEditor() {
                 </div>
               )}
 
-              {!deckCatalogPending && filteredCollectionDrafts.length > 0 && (
+              {!showArcana && !deckCatalogPending && filteredCollectionDrafts.length > 0 && (
                 <div className={cn("mt-4", filteredCollectionDecks.length > 0 && "border-t pt-4")}>
                   <div className="mb-3 flex flex-wrap items-center gap-2">
                     <span className="text-ui-label font-semibold text-muted-foreground uppercase tracking-wide">
@@ -756,7 +786,7 @@ export default function DeckEditor() {
                 </div>
               )}
 
-              {!deckCatalogPending && publishEnabled && signedIn && (
+              {!showArcana && !deckCatalogPending && publishEnabled && signedIn && (
                 <div className="mt-4 border-t pt-4">
                   <div className="mb-3 flex flex-wrap items-center gap-2">
                     <span className="text-ui-label font-semibold uppercase tracking-wide text-muted-foreground">

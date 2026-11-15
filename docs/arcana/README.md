@@ -37,6 +37,8 @@ Hub 第一次成功以 Arcana 登入時，會把 issuer 記在 `arcana_meta`。�
 docker compose -f compose.arcana.yml -f ops/arcana/compose.stage1.yml up -d hub
 ```
 
+建議直接在 `.env` 設定 `COMPOSE_FILE=compose.arcana.yml:ops/arcana/compose.stage1.yml`，之後一律用不帶 `-f` 的 `docker compose`。只要有一次單獨用 `-f compose.arcana.yml` 啟動其他服務（例如 `up -d web`），Docker 會連帶重建 Hub，Hub 就會脫離原型網路：Arcana 登入跟著失敗，同步也停住。
+
 `.env` 的設定：
 - `ARCANA_ISSUER=http://127.0.0.1:7876/`
 - `ARCANA_AUTHORIZE_URL=http://127.0.0.1:7876/api/integrations/v1/oauth/authorize`
