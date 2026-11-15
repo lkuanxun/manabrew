@@ -153,6 +153,7 @@ async fn get_json<T: DeserializeOwned>(
             .await
             .map_err(|error| SyncError::Failed(error.to_string())),
         StatusCode::GONE => Err(SyncError::CursorExpired),
+        StatusCode::BAD_REQUEST if path.starts_with("/changes") => Err(SyncError::CursorExpired),
         StatusCode::TOO_MANY_REQUESTS => Err(SyncError::RetryAfter(
             response
                 .headers()
@@ -317,14 +318,18 @@ fn record_failure(state: &AppState, target: &ArcanaSyncTarget, error: SyncError)
         ),
         SyncError::CursorExpired => ("change cursor expired".to_string(), 0, true),
         SyncError::RetryAfter(seconds) => ("rate limited by Arcana".to_string(), seconds, false),
-        SyncError::Failed(message) => {
+        SyncError::Failed(detail) => {
+            tracing::warn!(account = %target.account_id, error = %detail, "arcana sync failed");
             let exponent = target.failures.clamp(0, 5) as u32;
             let delay = (BACKOFF_BASE_SECS * 2_i64.pow(exponent)).min(BACKOFF_MAX_SECS)
                 + rand::thread_rng().gen_range(0..5);
-            (message, delay, false)
+            (
+                "Could not reach Arcana; retrying automatically".to_string(),
+                delay,
+                false,
+            )
         }
     };
-    tracing::warn!(account = %target.account_id, error = %message, "arcana sync failed");
     if let Err(error) = state.storage.lock().unwrap().record_arcana_sync_failure(
         &target.account_id,
         &message,
