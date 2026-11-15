@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Github } from "lucide-react";
+import { Github, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -206,6 +206,17 @@ export function SignInFlow({ prefill, deferHandleStep = false, onComplete }: Sig
           ) : (
             <div className="animate-onboard-fade-up space-y-4">
               <div className="space-y-2">
+                {providers.arcana && (
+                  <Button
+                    variant="primary"
+                    className="w-full justify-center"
+                    disabled={busy}
+                    onClick={() => handleOAuth("arcana")}
+                  >
+                    <Layers className="mr-2 h-4 w-4" />
+                    Continue with Arcana
+                  </Button>
+                )}
                 {providers.github !== false && (
                   <Button
                     variant="outline"

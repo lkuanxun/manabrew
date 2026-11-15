@@ -13,7 +13,7 @@ export type AuthAccount = {
 
 export type AuthIdentity = { provider: string; email?: string };
 
-export type AuthProviders = { github: boolean; discord: boolean; email: boolean };
+export type AuthProviders = { github: boolean; discord: boolean; email: boolean; arcana: boolean };
 
 export type AuthSessionResponse = {
   access_token: string;

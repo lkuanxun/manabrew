@@ -16,6 +16,9 @@ use sha2::{Digest, Sha256};
 
 use crate::preset_decks::PresetDeck;
 
+mod arcana_storage;
+pub use arcana_storage::{ArcanaGrantRow, NewArcanaGrant};
+
 pub struct ChatReportRow<'a> {
     pub id: &'a str,
     pub created_at: &'a str,
@@ -335,6 +338,7 @@ impl Storage {
             asset_base_url,
         };
         storage.migrate()?;
+        storage.migrate_arcana()?;
         Ok(storage)
     }
 
@@ -347,6 +351,7 @@ impl Storage {
             asset_base_url: Some("https://assets.example".into()),
         };
         storage.migrate()?;
+        storage.migrate_arcana()?;
         Ok(storage)
     }
 

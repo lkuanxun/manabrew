@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Github, Mail, Unlink } from "lucide-react";
+import { Github, Layers, Mail, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { DiscordIcon } from "@/components/icons/DiscordIcon";
@@ -12,11 +12,13 @@ import type { AuthIdentity } from "@/api/authTypes";
 const PROVIDER_LABELS: Record<string, string> = {
   github: `GitHub`,
   discord: `Discord`,
+  arcana: `Arcana`,
   email: `Email`,
 };
 function providerIcon(provider: string) {
   if (provider === "github") return <Github className="h-4 w-4" />;
   if (provider === "discord") return <DiscordIcon className="h-4 w-4" />;
+  if (provider === "arcana") return <Layers className="h-4 w-4" />;
   return <Mail className="h-4 w-4" />;
 }
 interface SignInMethodsCardProps {

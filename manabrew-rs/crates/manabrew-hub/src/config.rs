@@ -40,6 +40,15 @@ pub struct AuthConfig {
     pub email_from: String,
     pub auth_emails_per_hour: u32,
     pub auth_attempts_per_hour: u32,
+    pub arcana: Option<ArcanaConfig>,
+}
+
+#[derive(Clone)]
+pub struct ArcanaConfig {
+    pub client: OAuthClient,
+    pub issuer: String,
+    pub authorize_url: String,
+    pub api_base_url: String,
 }
 
 #[derive(Clone)]
@@ -139,6 +148,7 @@ impl AuthConfig {
                 .unwrap_or_else(|| "http://localhost:5173".into()),
             github: oauth_client("GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET"),
             discord: oauth_client("DISCORD_CLIENT_ID", "DISCORD_CLIENT_SECRET"),
+            arcana: arcana_config(),
             resend_api_key: std::env::var("RESEND_API_KEY")
                 .ok()
                 .filter(|key| !key.is_empty()),
@@ -175,5 +185,16 @@ fn oauth_client(id_var: &str, secret_var: &str) -> Option<OAuthClient> {
     Some(OAuthClient {
         client_id,
         client_secret,
+    })
+}
+
+fn arcana_config() -> Option<ArcanaConfig> {
+    Some(ArcanaConfig {
+        client: oauth_client("ARCANA_CLIENT_ID", "ARCANA_CLIENT_SECRET")?,
+        issuer: std::env::var("ARCANA_ISSUER")
+            .ok()
+            .filter(|v| !v.is_empty())?,
+        authorize_url: trimmed_var("ARCANA_AUTHORIZE_URL")?,
+        api_base_url: trimmed_var("ARCANA_API_BASE_URL")?,
     })
 }

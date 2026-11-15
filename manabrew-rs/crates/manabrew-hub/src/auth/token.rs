@@ -173,6 +173,11 @@ pub async fn token_handler(
         Ok(None) => return oauth_error(StatusCode::BAD_REQUEST, "invalid_grant"),
         Err(error) => return internal_error(error),
     };
+    if let Some(response) =
+        super::arcana::session_grant_rejection(&state, &request.refresh_token).await
+    {
+        return response;
+    }
     if let Err(error) = touch_refresh_token(&state, &request.refresh_token) {
         return internal_error(error);
     }

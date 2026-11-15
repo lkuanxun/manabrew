@@ -152,7 +152,7 @@ pub struct CallbackQuery {
     error: Option<String>,
 }
 
-fn app_redirect(state: &AppState, return_to: &str, query: &[(&str, &str)]) -> Response {
+pub(super) fn app_redirect(state: &AppState, return_to: &str, query: &[(&str, &str)]) -> Response {
     let base = if return_to.is_empty() {
         &state.auth.web_app_url
     } else {

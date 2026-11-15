@@ -594,6 +594,7 @@ pub struct AuthProviders {
     pub github: bool,
     pub discord: bool,
     pub email: bool,
+    pub arcana: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]

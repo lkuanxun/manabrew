@@ -175,6 +175,14 @@ pub fn build_router(state: Arc<AppState>) -> Router {
             "/api/auth/callback/:provider",
             get(auth::oauth_callback_handler),
         )
+        .route(
+            "/api/auth/oauth/arcana/start",
+            post(auth::arcana_start_handler),
+        )
+        .route(
+            "/api/auth/callback/arcana",
+            get(auth::arcana_callback_handler),
+        )
         .route("/api/auth/exchange", post(auth::exchange_handler))
         .route("/api/auth/email/request", post(auth::email_request_handler))
         .route("/api/auth/email/verify", post(auth::email_verify_handler))
@@ -1398,6 +1406,7 @@ mod tests {
                 email_from: "Manabrew <login@manabrew.test>".into(),
                 auth_emails_per_hour: 100,
                 auth_attempts_per_hour: 100,
+                arcana: None,
             },
             auth_email_limiter: RateLimiter::new(100),
             auth_code_limiter: RateLimiter::new(100),

@@ -42,10 +42,16 @@ pub async fn exchange_handler(
         Ok(None) => return StatusCode::UNAUTHORIZED.into_response(),
         Err(error) => return internal_error(error),
     };
-    match create_session(&state, &account) {
-        Ok(session) => Json(session).into_response(),
-        Err(error) => internal_error(error),
+    let session = match create_session(&state, &account) {
+        Ok(session) => session,
+        Err(error) => return internal_error(error),
+    };
+    if let Err(error) =
+        super::arcana::bind_session(&state, &hash_token(&code), &session.refresh_token)
+    {
+        return internal_error(error);
     }
+    Json(session).into_response()
 }
 
 pub async fn me_handler(
@@ -119,6 +125,7 @@ pub async fn delete_account_handler(
             }
         }
     }
+    super::arcana::revoke_account_grants(&state, &account.id).await;
     match state.storage.lock().unwrap().delete_account(&account.id) {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(error) => internal_error(error),
@@ -144,6 +151,7 @@ pub async fn logout_handler(
     State(state): State<Arc<AppState>>,
     Json(request): Json<RevocationRequest>,
 ) -> Response {
+    super::arcana::revoke_session_grant(&state, &request.token).await;
     match revoke_refresh_token(&state, &request.token) {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(error) => internal_error(error),
@@ -155,19 +163,27 @@ pub async fn unlink_identity_handler(
     Path(provider): Path<String>,
     SessionAccount(account): SessionAccount,
 ) -> Response {
-    let storage = state.storage.lock().unwrap();
-    let identities = match storage.list_identities(&account.id) {
-        Ok(identities) => identities,
-        Err(error) => return internal_error(error),
+    let deleted = {
+        let storage = state.storage.lock().unwrap();
+        let identities = match storage.list_identities(&account.id) {
+            Ok(identities) => identities,
+            Err(error) => return internal_error(error),
+        };
+        if !identities.iter().any(|i| i.provider == provider) {
+            return StatusCode::NOT_FOUND.into_response();
+        }
+        if identities.len() <= 1 {
+            return StatusCode::CONFLICT.into_response();
+        }
+        storage.delete_identity(&account.id, &provider)
     };
-    if !identities.iter().any(|i| i.provider == provider) {
-        return StatusCode::NOT_FOUND.into_response();
-    }
-    if identities.len() <= 1 {
-        return StatusCode::CONFLICT.into_response();
-    }
-    match storage.delete_identity(&account.id, &provider) {
-        Ok(_) => StatusCode::NO_CONTENT.into_response(),
+    match deleted {
+        Ok(_) => {
+            if provider == super::arcana::PROVIDER_ARCANA {
+                super::arcana::revoke_account_grants(&state, &account.id).await;
+            }
+            StatusCode::NO_CONTENT.into_response()
+        }
         Err(error) => internal_error(error),
     }
 }

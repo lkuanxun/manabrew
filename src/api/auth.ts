@@ -10,7 +10,7 @@ import type {
 } from "@/api/authTypes";
 import type { AccountExport } from "@/api/hubTypes";
 
-export type OAuthProvider = "github" | "discord";
+export type OAuthProvider = "github" | "discord" | "arcana";
 export type OAuthMode = "signin" | "link";
 
 async function authRequest(path: string, init?: RequestInit, token?: string): Promise<Response> {
