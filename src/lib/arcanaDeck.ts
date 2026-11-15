@@ -1,4 +1,5 @@
 import type { ArcanaCard, ArcanaDeck, ArcanaDeckEntry } from "@/api/arcana";
+import { SCRYFALL_API } from "@/api/scryfall";
 import { enqueueCardLookup } from "@/api/scryfallBatch";
 import { scryfallToDeckCard } from "@/lib/scryfall.utils";
 import type { Deck, DeckCard } from "@/protocol/deck";
@@ -6,6 +7,10 @@ import type { Deck, DeckCard } from "@/protocol/deck";
 export interface ArcanaDeckConversion {
   deck: Deck;
   unresolved: string[];
+}
+
+export function arcanaCardImageUrl(card: ArcanaCard): string {
+  return card.faces[0]?.image_url ?? `${SCRYFALL_API}/cards/${card.printing_id}?format=image`;
 }
 
 async function resolvePrinting(card: ArcanaCard): Promise<DeckCard | null> {

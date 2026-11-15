@@ -62,3 +62,27 @@ export async function fetchArcanaLibrary(token: string): Promise<ArcanaLibrary> 
 export async function requestArcanaSync(token: string): Promise<void> {
   await arcanaRequest("/api/arcana/sync", token, { method: "POST" });
 }
+export interface ArcanaRuleCard {
+  name: string;
+  oracle_id?: string | null;
+}
+export interface ArcanaRoleRestriction extends ArcanaRuleCard {
+  scope: "commander" | "companion";
+}
+export interface ArcanaRuleProfile {
+  bracket?: number | null;
+  game_changer_limit: number | null;
+}
+export interface ArcanaRules {
+  revision: string;
+  updated_at: string;
+  duel_banned: ArcanaRuleCard[];
+  duel_commander_restricted: ArcanaRoleRestriction[];
+  commander_banned: ArcanaRuleCard[];
+  commander_restricted: ArcanaRoleRestriction[];
+  game_changers: ArcanaRuleCard[];
+  rule_profiles: Record<string, ArcanaRuleProfile>;
+}
+export async function fetchArcanaRules(token: string): Promise<ArcanaRules | null> {
+  return (await (await arcanaRequest("/api/arcana/rules", token)).json()) as ArcanaRules | null;
+}

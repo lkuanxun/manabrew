@@ -30,6 +30,7 @@ interface DeckSelectionCardProps {
   coverFallbackClassName?: string;
   isPreset: boolean;
   isHub?: boolean;
+  sourceLabel?: string;
   isSelected: boolean;
   isLegal?: boolean;
   validationError?: string;
@@ -71,6 +72,7 @@ export function DeckSelectionCard({
   coverFallbackClassName,
   isPreset,
   isHub = false,
+  sourceLabel = "Community",
   isSelected,
   isLegal = true,
   validationError,
@@ -222,7 +224,7 @@ export function DeckSelectionCard({
           {!dense && (
             <span className="text-ui-meta text-text-on-tinted/85">
               {isHub
-                ? `Community · ${cardCount ?? cards.length} cards`
+                ? `${sourceLabel} · ${cardCount ?? cards.length} cards`
                 : isPreset
                   ? `Preset deck`
                   : `${cards.length} cards`}

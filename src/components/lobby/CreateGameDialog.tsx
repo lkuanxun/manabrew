@@ -12,10 +12,14 @@ import type { Deck, DeckCard } from "@/protocol/deck";
 import type { EngineKind } from "@/protocol";
 import {
   GAME_FORMATS,
+  PLAYABLE_FORMATS,
   validateDeckSections,
   commanderPairLabel,
   type GameFormat,
 } from "@/lib/formats";
+import { restrictionWarnings } from "@/lib/formatRestrictions";
+import { RestrictionWarnings } from "@/components/lobby/RestrictionWarnings";
+import { useFormatRestrictions } from "@/stores/useArcanaRulesStore";
 import { PartnerBadge } from "@/components/deck/PartnerBadge";
 import { FormatBadge } from "@/components/game/FormatBadge";
 import { DeckSelectionCard } from "./DeckSelectionCard";
@@ -69,9 +73,10 @@ export function CreateGameDialog({
   const accountDeckDetails = useAccountDecksStore((state) => state.details);
   const allowIllegalDecks = useGameDevStore((s) => s.allowIllegalDecks);
   const isLobbyMode = mode === "lobby";
+  const restrictions = useFormatRestrictions();
   const denseDecks = useIsShortScreen();
   const isTouch = useIsTouch();
-  const initialFormat = GAME_FORMATS.find((f) => f.id === forcedFormatId) ?? GAME_FORMATS[0];
+  const initialFormat = GAME_FORMATS.find((f) => f.id === forcedFormatId) ?? PLAYABLE_FORMATS[0];
   const [selectedFormat, setSelectedFormat] = useState<GameFormat>(initialFormat);
   const [selectedDeck, setSelectedDeck] = useState<string>(preSelectedDeckId ?? "current");
   const [selectedCommander, setSelectedCommander] = useState<string>(
@@ -322,6 +327,16 @@ export function CreateGameDialog({
           cardPool,
         )
     : { legal: false, errors: [] as string[] };
+  const selectedDeckWarnings = selectedDeckEntry
+    ? restrictionWarnings(
+        {
+          deck: selectedDeckEntry.sourceDeck,
+          commanderName: selectedCommander || selectedDeckEntry.commanderName,
+        },
+        selectedFormat.id,
+        restrictions,
+      )
+    : [];
   const isReady =
     selectedDeckIsVisible && (selectedDeckValidation.legal || allowIllegalDecks) && commanderValid;
   function invalidateHubSelection() {
@@ -471,7 +486,7 @@ export function CreateGameDialog({
               <div>
                 <SectionLabel>Format</SectionLabel>
                 <div className="mt-2 space-y-2">
-                  {GAME_FORMATS.map((format) => (
+                  {PLAYABLE_FORMATS.map((format) => (
                     <button
                       key={format.id}
                       type="button"
@@ -825,6 +840,7 @@ export function CreateGameDialog({
                       `This deck is not legal in the room format.`}
                   </span>
                 )}
+                <RestrictionWarnings items={[{ warnings: selectedDeckWarnings }]} />
               </div>
             ) : (
               <span className="text-muted-foreground italic text-ui-meta">No deck selected</span>

@@ -2,15 +2,27 @@ import { AlertTriangle } from "lucide-react";
 import { useDeckStore } from "@/stores/useDeckStore";
 import { getFormat, validateDeckSections } from "@/lib/formats";
 import { useCardPool } from "@/hooks/useCardPool";
+import { RestrictionWarnings } from "@/components/lobby/RestrictionWarnings";
+import { restrictionWarnings } from "@/lib/formatRestrictions";
+import { useFormatRestrictions } from "@/stores/useArcanaRulesStore";
 export function DeckValidationPanel({ unsupportedNames }: { unsupportedNames?: Set<string> }) {
   const { currentDeck } = useDeckStore();
   const format = getFormat(currentDeck.format ?? "standard");
   const input = { deck: currentDeck, commanderName: currentDeck.commanders?.[0]?.identity.name };
   const cardPool = useCardPool([{ input, format }]);
+  const restrictions = useFormatRestrictions();
   if (!format) return null;
   const validation = validateDeckSections(input, format, cardPool);
+  const warnings = restrictionWarnings(input, format.id, restrictions);
   const unsupportedList = unsupportedNames ? [...unsupportedNames].sort() : [];
-  if (validation.legal && unsupportedList.length === 0) return null;
+  if (validation.legal && unsupportedList.length === 0) {
+    return warnings.length > 0 ? (
+      <RestrictionWarnings
+        items={[{ warnings }]}
+        className="mx-4 mt-4 rounded-xl border border-warning/40 bg-warning/5 px-5 py-4"
+      />
+    ) : null;
+  }
   const compatibilityErrors =
     unsupportedList.length > 0
       ? [
@@ -39,6 +51,7 @@ export function DeckValidationPanel({ unsupportedNames }: { unsupportedNames?: S
           </li>
         ))}
       </ul>
+      <RestrictionWarnings items={[{ warnings }]} className="mt-2" />
     </div>
   );
 }

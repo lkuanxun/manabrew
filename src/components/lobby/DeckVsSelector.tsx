@@ -14,7 +14,13 @@ import { ROUTES } from "@/lib/constants";
 import { resolveAiOpponent } from "@/lib/aiOpponent";
 import { getDeckFingerprint } from "@/lib/decks";
 import { reportPublishedDeckPlay } from "@/lib/deckPlayEvidence";
-import { GAME_FORMATS, getFormat, validateDeckSections } from "@/lib/formats";
+import { PLAYABLE_FORMATS, getFormat, isPlayableFormat, validateDeckSections } from "@/lib/formats";
+import { restrictionWarnings } from "@/lib/formatRestrictions";
+import { RestrictionWarnings } from "@/components/lobby/RestrictionWarnings";
+import type { ArcanaDeck } from "@/api/arcana";
+import { useArcanaLibrary } from "@/hooks/useArcanaLibrary";
+import { arcanaCardImageUrl, arcanaDeckToDeck } from "@/lib/arcanaDeck";
+import { useFormatRestrictions } from "@/stores/useArcanaRulesStore";
 import { resolveOfflineEngine } from "@/lib/offlineEngine";
 import { hubEntryEngines, supportsEngine } from "@/lib/engines";
 import { savePresetToAccountOnUse } from "@/lib/presetDeckAccount";
@@ -89,14 +95,15 @@ export function DeckVsSelector({
   const boardBackground = usePreferencesStore((state) => state.boardBackgroundId);
   const setBoardBackground = usePreferencesStore((state) => state.setBoardBackgroundId);
   const rememberedFormatId =
-    !preSelectedDeckEntry && lastOfflineFormatId && getFormat(lastOfflineFormatId)
+    !preSelectedDeckEntry && lastOfflineFormatId && isPlayableFormat(lastOfflineFormatId)
       ? lastOfflineFormatId
-      : null;
+      : PLAYABLE_FORMATS[0].id;
   const [roster, dispatchRoster] = useReducer(
     offlineRosterReducer,
     preSelectedDeckEntry,
     createOfflineRoster,
   );
+  const restrictions = useFormatRestrictions();
   const theme = useTheme().gameTheme;
   const seatColors = [
     theme.playerColors.self,
@@ -122,6 +129,8 @@ export function DeckVsSelector({
   const [starting, setStarting] = useState(false);
   const [tableDialogOpen, setTableDialogOpen] = useState(false);
   const [loadingHubDeckId, setLoadingHubDeckId] = useState<string | null>(null);
+  const [loadingArcanaDeckId, setLoadingArcanaDeckId] = useState<string | null>(null);
+  const { library: arcanaLibrary } = useArcanaLibrary();
   const [loadingSeatId, setLoadingSeatId] = useState<string | null>(null);
   const selectedFormatRef = useRef(selectedFormat);
   selectedFormatRef.current = selectedFormat;
@@ -197,6 +206,11 @@ export function DeckVsSelector({
       });
   }, [hubDecks.enabled, hubRestoreAttempt, loadHubDeck, preSelectedHubDeckId]);
   const searchLower = deckSearch.toLowerCase();
+  const arcanaDecks = (arcanaLibrary?.decks ?? []).filter(
+    (deck) =>
+      (deckFormat === null || deck.format === deckFormat) &&
+      deck.name.toLowerCase().includes(searchLower),
+  );
   const formatFilteredPresets = presetDecks.filter(
     (deck) => deckFormat === null || (deck.format ?? "standard") === deckFormat,
   );
@@ -303,12 +317,21 @@ export function DeckVsSelector({
   function invalidateHubSelection() {
     hubSelectionRequestIdRef.current += 1;
     setLoadingHubDeckId(null);
+    setLoadingArcanaDeckId(null);
     setLoadingSeatId(null);
   }
   function changeFormat(formatId: PlayFormatId | null) {
     if (formatId === selectedFormat) return;
     invalidateHubSelection();
-    dispatchRoster({ type: "reset" });
+    const nextDeckFormat = formatId === null ? null : (getFormat(formatId)?.deckFormat ?? formatId);
+    if (nextDeckFormat !== null && nextDeckFormat === deckFormat) {
+      if (!isOfflinePodFormat(formatId)) {
+        for (const seat of roster.seats.slice(2))
+          dispatchRoster({ type: "remove", seatId: seat.id });
+      }
+    } else {
+      dispatchRoster({ type: "reset" });
+    }
     setSelectedFormat(formatId);
   }
   function assignDeck(
@@ -381,6 +404,40 @@ export function DeckVsSelector({
       }
     }
   }
+  async function selectArcanaDeck(source: ArcanaDeck) {
+    const seatId = roster.activeSeatId ?? PLAYER_SEAT_ID;
+    const requestId = ++hubSelectionRequestIdRef.current;
+    setLoadingArcanaDeckId(source.deck_id);
+    setLoadingSeatId(seatId);
+    try {
+      const { deck, unresolved } = await arcanaDeckToDeck(source);
+      if (hubSelectionRequestIdRef.current !== requestId) return;
+      if (unresolved.length > 0) {
+        toast.warning(`Could not find ${unresolved.length} card(s): ${unresolved.join(", ")}`);
+      }
+      assignDeck(
+        {
+          id: `arcana:${source.deck_id}`,
+          sourceId: source.deck_id,
+          name: source.name,
+          sourceDeck: deck,
+          source: "arcana",
+          formatId: deck.format ?? "commander",
+          commanderName: deck.commanders?.[0]?.identity.name,
+        },
+        seatId,
+        requestId,
+      );
+    } catch (err) {
+      if (hubSelectionRequestIdRef.current !== requestId) return;
+      toast.error(err instanceof Error ? err.message : `Failed to load Arcana deck`);
+    } finally {
+      if (hubSelectionRequestIdRef.current === requestId) {
+        setLoadingArcanaDeckId(null);
+        setLoadingSeatId(null);
+      }
+    }
+  }
   function selectUserDeck(entry: SelectedDeck) {
     if (!selectedFormat && entry.formatId) setSelectedFormat(entry.formatId);
     assignDeck(entry);
@@ -448,7 +505,18 @@ export function DeckVsSelector({
     }
   }
   const { errors: seatErrors, launch } = prepareOfflineGame(roster, deckFormat, cardPool);
-  const isReady = loadingHubDeckId === null && launch !== null;
+  const seatWarnings = roster.seats.map((seat, index) => ({
+    label: assignments[index].label,
+    warnings:
+      seat.deck && selectedFormat
+        ? restrictionWarnings(
+            { deck: seat.deck.sourceDeck, commanderName: seat.deck.commanderName },
+            selectedFormat,
+            restrictions,
+          )
+        : [],
+  }));
+  const isReady = loadingHubDeckId === null && loadingArcanaDeckId === null && launch !== null;
   const isCommander = isOfflinePodFormat(selectedFormat);
   const activeAssignment = assignments.find((assignment) => assignment.id === roster.activeSeatId);
   const searchControl = (
@@ -480,8 +548,7 @@ export function DeckVsSelector({
             onValueChange={(value) => changeFormat(value || null)}
             className="min-h-11 max-w-44 shrink-0 text-ui-label font-medium"
           >
-            <AppSelectOption value="">All formats</AppSelectOption>
-            {GAME_FORMATS.map((format) => (
+            {PLAYABLE_FORMATS.map((format) => (
               <AppSelectOption key={format.id} value={format.id}>
                 <FormatBadge formatId={format.id} />
                 <span className="truncate">{format.name}</span>
@@ -498,9 +565,9 @@ export function DeckVsSelector({
               aria-label="Filter decks by format"
               className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 py-1 pr-6 no-scrollbar touch-scroll-fade"
             >
-              {[{ id: null, name: "All" }, ...GAME_FORMATS].map((format) => (
+              {PLAYABLE_FORMATS.map((format) => (
                 <button
-                  key={format.id ?? "all"}
+                  key={format.id}
                   type="button"
                   aria-pressed={selectedFormat === format.id}
                   onClick={() => changeFormat(format.id)}
@@ -532,6 +599,65 @@ export function DeckVsSelector({
           shortTouch && "space-y-3 pb-2",
         )}
       >
+        {arcanaDecks.length > 0 && (
+          <div>
+            <p className="text-ui-meta uppercase tracking-wider text-muted-foreground font-semibold pt-2 pb-1">
+              Arcana Decks
+            </p>
+            <div
+              className={cn(
+                "grid gap-3",
+                "grid-cols-[repeat(auto-fill,minmax(min(100%,16rem),1fr))]",
+              )}
+            >
+              {arcanaDecks.map((deck) => {
+                const selected = roster.seats
+                  .map((seat) => seat.deck)
+                  .find((entry) => entry?.source === "arcana" && entry.sourceId === deck.deck_id);
+                const format = selected ? getFormat(selected.formatId ?? "commander") : null;
+                const validation =
+                  selected && format
+                    ? validateDeckSections(
+                        { deck: selected.sourceDeck, commanderName: selected.commanderName },
+                        format,
+                        cardPool,
+                      )
+                    : { legal: true, errors: [] as string[] };
+                const loading = loadingArcanaDeckId === deck.deck_id;
+                return (
+                  <DeckSelectionCard
+                    key={deck.deck_id}
+                    name={loading ? `Loading ${deck.name}…` : deck.name}
+                    color={deck.color_identity.join("")}
+                    cardCount={[...deck.commanders, ...deck.mainboard].reduce(
+                      (sum, entry) => sum + entry.quantity,
+                      0,
+                    )}
+                    cards={[]}
+                    cover={undefined}
+                    coverImageUrl={
+                      deck.commanders[0] ? arcanaCardImageUrl(deck.commanders[0].card) : undefined
+                    }
+                    isPreset={false}
+                    isHub
+                    sourceLabel="Arcana"
+                    isSelected={false}
+                    isLegal={validation.legal}
+                    validationError={validation.errors[0]}
+                    assignments={assignmentsForDeck(`arcana:${deck.deck_id}`)}
+                    disabled={starting}
+                    formatId={deck.format}
+                    dense={denseDecks}
+                    isTouch={isTouch}
+                    loading={loading}
+                    onSelect={() => void selectArcanaDeck(deck)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div>
           <p className="text-ui-meta uppercase tracking-wider text-muted-foreground font-semibold pt-2 pb-1">
             Your Decks
@@ -717,6 +843,10 @@ export function DeckVsSelector({
         </div>
       </div>
 
+      <RestrictionWarnings
+        items={seatWarnings}
+        className="shrink-0 border-t bg-muted/10 px-4 pt-2 sm:px-6 lg:px-8"
+      />
       <div
         className={cn(
           "grid shrink-0 gap-2 border-t bg-muted/10 px-4 py-2 xl:flex xl:items-center xl:justify-between sm:gap-3 sm:px-6 sm:py-3 lg:px-8",
