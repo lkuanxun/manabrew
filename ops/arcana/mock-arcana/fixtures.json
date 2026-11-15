@@ -1,0 +1,709 @@
+{
+ "mock-subject-alice": {
+  "decks": [
+   {
+    "deck_id": "fixture-kraum-tymna",
+    "revision": "r1",
+    "name": "Fixture: Kraum + Tymna",
+    "format": "commander",
+    "ruleset": "arcana-custom-duel",
+    "color_identity": [
+     "W",
+     "U",
+     "B",
+     "R"
+    ],
+    "commanders": [
+     {
+      "card": {
+       "oracle_id": "5f694f2d-9349-4988-b2b4-788136d4293e",
+       "printing_id": "557fcd17-6cb3-414a-b2b1-ea9ae32e5aec",
+       "name": "Kraum, Ludevic's Opus",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "c16",
+       "collector_number": "34",
+       "finish": "foil",
+       "color_identity": [
+        "U",
+        "R"
+       ],
+       "faces": []
+      },
+      "quantity": 1
+     },
+     {
+      "card": {
+       "oracle_id": "d15642e4-e61c-4d29-af48-de837991245e",
+       "printing_id": "bc7cbe9b-324e-42b8-94e2-36e91cb32163",
+       "name": "Tymna the Weaver",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "c16",
+       "collector_number": "48",
+       "finish": "nonfoil",
+       "color_identity": [
+        "W",
+        "B"
+       ],
+       "faces": []
+      },
+      "quantity": 1
+     }
+    ],
+    "mainboard": [
+     {
+      "card": {
+       "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487",
+       "printing_id": "2bdf0cec-c405-4aa2-b423-2ef6b35ba712",
+       "name": "Sol Ring",
+       "printed_name": "陽光戒",
+       "lang": "zht",
+       "set_code": "clb",
+       "collector_number": "871",
+       "finish": "nonfoil",
+       "color_identity": [],
+       "faces": []
+      },
+      "quantity": 1
+     },
+     {
+      "card": {
+       "oracle_id": "0895c9b7-ae7d-4bb3-af17-3b75deb50a25",
+       "printing_id": "86424491-a372-40c4-bfb5-faa2b2d41d4c",
+       "name": "Command Tower",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "cmr",
+       "collector_number": "350",
+       "finish": "etched",
+       "color_identity": [],
+       "faces": []
+      },
+      "quantity": 1
+     },
+     {
+      "card": {
+       "oracle_id": "0bc7f093-bef0-4f1a-852c-4b75ebf54838",
+       "printing_id": "a0cf9795-7862-40e4-aac4-0eace8714988",
+       "name": "Arcane Signet",
+       "printed_name": "秘儀の印鑑",
+       "lang": "ja",
+       "set_code": "trc",
+       "collector_number": "485",
+       "finish": "nonfoil",
+       "color_identity": [],
+       "faces": []
+      },
+      "quantity": 1
+     },
+     {
+      "card": {
+       "oracle_id": "4457ed35-7c10-48c8-9776-456485fdf070",
+       "printing_id": "0ec1f7e2-125c-4aa9-b38d-e9c026c8a2de",
+       "name": "Lightning Bolt",
+       "printed_name": "閃電擊",
+       "lang": "zht",
+       "set_code": "clb",
+       "collector_number": "187",
+       "finish": "nonfoil",
+       "color_identity": [
+        "R"
+       ],
+       "faces": []
+      },
+      "quantity": 1
+     },
+     {
+      "card": {
+       "oracle_id": "b2c6aa39-2d2a-459c-a555-fb48ba993373",
+       "printing_id": "17e2b637-72b1-4457-aaba-66d51107be4c",
+       "name": "Island",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "fdn",
+       "collector_number": "274",
+       "finish": "nonfoil",
+       "color_identity": [
+        "U"
+       ],
+       "faces": []
+      },
+      "quantity": 24
+     },
+     {
+      "card": {
+       "oracle_id": "b2c6aa39-2d2a-459c-a555-fb48ba993373",
+       "printing_id": "cad45461-b120-4cd4-8acc-0c6d084b73cb",
+       "name": "Island",
+       "printed_name": "島",
+       "lang": "ja",
+       "set_code": "war",
+       "collector_number": "253",
+       "finish": "nonfoil",
+       "color_identity": [
+        "U"
+       ],
+       "faces": []
+      },
+      "quantity": 10
+     },
+     {
+      "card": {
+       "oracle_id": "56719f6a-1a6c-4c0a-8d21-18f7d7350b68",
+       "printing_id": "319bc1f0-ee42-44e5-b08b-735613ded2ba",
+       "name": "Swamp",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "fdn",
+       "collector_number": "276",
+       "finish": "nonfoil",
+       "color_identity": [
+        "B"
+       ],
+       "faces": []
+      },
+      "quantity": 20
+     },
+     {
+      "card": {
+       "oracle_id": "bc71ebf6-2056-41f7-be35-b2e5c34afa99",
+       "printing_id": "4ef17ed4-a9b5-4b8e-b4cb-2ecb7e5898c3",
+       "name": "Plains",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "fdn",
+       "collector_number": "272",
+       "finish": "nonfoil",
+       "color_identity": [
+        "W"
+       ],
+       "faces": []
+      },
+      "quantity": 20
+     },
+     {
+      "card": {
+       "oracle_id": "a3fb7228-e76b-4e96-a40e-20b5fed75685",
+       "printing_id": "279df7e2-2a3b-464a-a7df-e91da28e3a8c",
+       "name": "Mountain",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "fdn",
+       "collector_number": "278",
+       "finish": "nonfoil",
+       "color_identity": [
+        "R"
+       ],
+       "faces": []
+      },
+      "quantity": 20
+     }
+    ],
+    "updated_at": "2026-11-15T00:00:00Z"
+   },
+   {
+    "deck_id": "fixture-dargo-jeska",
+    "revision": "r1",
+    "name": "Fixture: Dargo + Jeska",
+    "format": "commander",
+    "ruleset": "arcana-custom-duel",
+    "color_identity": [
+     "R"
+    ],
+    "commanders": [
+     {
+      "card": {
+       "oracle_id": "a2414a2d-0fd8-4084-8762-ace48f70c853",
+       "printing_id": "5cd87cf8-4d5d-4aba-8dfa-800b1fb3799b",
+       "name": "Dargo, the Shipwrecker",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "cmr",
+       "collector_number": "172",
+       "finish": "nonfoil",
+       "color_identity": [
+        "R"
+       ],
+       "faces": []
+      },
+      "quantity": 1
+     },
+     {
+      "card": {
+       "oracle_id": "b1fbfcf3-6921-4417-a58e-0f5e5d34a105",
+       "printing_id": "48caf4c4-745c-4072-bf3d-1a3fa7c3bc9c",
+       "name": "Jeska, Thrice Reborn",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "cmr",
+       "collector_number": "186",
+       "finish": "nonfoil",
+       "color_identity": [
+        "R"
+       ],
+       "faces": []
+      },
+      "quantity": 1
+     }
+    ],
+    "mainboard": [
+     {
+      "card": {
+       "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487",
+       "printing_id": "0f003fde-be17-4159-a361-711ed0bee911",
+       "name": "Sol Ring",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "c16",
+       "collector_number": "272",
+       "finish": "nonfoil",
+       "color_identity": [],
+       "faces": []
+      },
+      "quantity": 1
+     },
+     {
+      "card": {
+       "oracle_id": "4457ed35-7c10-48c8-9776-456485fdf070",
+       "printing_id": "0ec1f7e2-125c-4aa9-b38d-e9c026c8a2de",
+       "name": "Lightning Bolt",
+       "printed_name": "閃電擊",
+       "lang": "zht",
+       "set_code": "clb",
+       "collector_number": "187",
+       "finish": "nonfoil",
+       "color_identity": [
+        "R"
+       ],
+       "faces": []
+      },
+      "quantity": 1
+     },
+     {
+      "card": {
+       "oracle_id": "0895c9b7-ae7d-4bb3-af17-3b75deb50a25",
+       "printing_id": "86424491-a372-40c4-bfb5-faa2b2d41d4c",
+       "name": "Command Tower",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "cmr",
+       "collector_number": "350",
+       "finish": "nonfoil",
+       "color_identity": [],
+       "faces": []
+      },
+      "quantity": 1
+     },
+     {
+      "card": {
+       "oracle_id": "a3fb7228-e76b-4e96-a40e-20b5fed75685",
+       "printing_id": "279df7e2-2a3b-464a-a7df-e91da28e3a8c",
+       "name": "Mountain",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "fdn",
+       "collector_number": "278",
+       "finish": "nonfoil",
+       "color_identity": [
+        "R"
+       ],
+       "faces": []
+      },
+      "quantity": 95
+     }
+    ],
+    "updated_at": "2026-11-15T00:00:00Z"
+   },
+   {
+    "deck_id": "fixture-emet-selch",
+    "revision": "r1",
+    "name": "Fixture: Emet-Selch (DFC)",
+    "format": "commander",
+    "ruleset": "arcana-custom-duel",
+    "color_identity": [
+     "U",
+     "B"
+    ],
+    "commanders": [
+     {
+      "card": {
+       "oracle_id": "3b102ccc-7629-457c-aba6-e9b00fd50c85",
+       "printing_id": "75cf4eb8-33e7-4dfc-b890-a7e3b5c1b9d5",
+       "name": "Emet-Selch, Unsundered // Hades, Sorcerer of Eld",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "fin",
+       "collector_number": "218",
+       "finish": "nonfoil",
+       "color_identity": [
+        "U",
+        "B"
+       ],
+       "faces": [
+        {
+         "name": "Emet-Selch, Unsundered",
+         "printed_name": null,
+         "image_url": null
+        },
+        {
+         "name": "Hades, Sorcerer of Eld",
+         "printed_name": null,
+         "image_url": null
+        }
+       ]
+      },
+      "quantity": 1
+     }
+    ],
+    "mainboard": [
+     {
+      "card": {
+       "oracle_id": "70113003-be5e-406a-9aec-cb480468c36d",
+       "printing_id": "85eaf5e7-77dc-4842-a70c-ce4ac7f724df",
+       "name": "Sephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "fin",
+       "collector_number": "115",
+       "finish": "nonfoil",
+       "color_identity": [
+        "B"
+       ],
+       "faces": [
+        {
+         "name": "Sephiroth, Fabled SOLDIER",
+         "printed_name": null,
+         "image_url": null
+        },
+        {
+         "name": "Sephiroth, One-Winged Angel",
+         "printed_name": null,
+         "image_url": null
+        }
+       ]
+      },
+      "quantity": 1
+     },
+     {
+      "card": {
+       "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487",
+       "printing_id": "42bede04-e93a-4a3e-acbd-148991eb1bff",
+       "name": "Sol Ring",
+       "printed_name": "太陽の指輪",
+       "lang": "ja",
+       "set_code": "trc",
+       "collector_number": "499",
+       "finish": "nonfoil",
+       "color_identity": [],
+       "faces": []
+      },
+      "quantity": 1
+     },
+     {
+      "card": {
+       "oracle_id": "0bc7f093-bef0-4f1a-852c-4b75ebf54838",
+       "printing_id": "a0cf9795-7862-40e4-aac4-0eace8714988",
+       "name": "Arcane Signet",
+       "printed_name": "秘儀の印鑑",
+       "lang": "ja",
+       "set_code": "trc",
+       "collector_number": "485",
+       "finish": "nonfoil",
+       "color_identity": [],
+       "faces": []
+      },
+      "quantity": 1
+     },
+     {
+      "card": {
+       "oracle_id": "b2c6aa39-2d2a-459c-a555-fb48ba993373",
+       "printing_id": "17e2b637-72b1-4457-aaba-66d51107be4c",
+       "name": "Island",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "fdn",
+       "collector_number": "274",
+       "finish": "nonfoil",
+       "color_identity": [
+        "U"
+       ],
+       "faces": []
+      },
+      "quantity": 47
+     },
+     {
+      "card": {
+       "oracle_id": "56719f6a-1a6c-4c0a-8d21-18f7d7350b68",
+       "printing_id": "319bc1f0-ee42-44e5-b08b-735613ded2ba",
+       "name": "Swamp",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "fdn",
+       "collector_number": "276",
+       "finish": "nonfoil",
+       "color_identity": [
+        "B"
+       ],
+       "faces": []
+      },
+      "quantity": 49
+     }
+    ],
+    "updated_at": "2026-11-15T00:00:00Z"
+   }
+  ],
+  "collection": [
+   {
+    "holding_id": "alice-h0",
+    "card": {
+     "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487",
+     "printing_id": "2bdf0cec-c405-4aa2-b423-2ef6b35ba712",
+     "name": "Sol Ring",
+     "printed_name": "陽光戒",
+     "lang": "zht",
+     "set_code": "clb",
+     "collector_number": "871",
+     "finish": "nonfoil",
+     "color_identity": [],
+     "faces": []
+    },
+    "present": true
+   },
+   {
+    "holding_id": "alice-h1",
+    "card": {
+     "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487",
+     "printing_id": "42bede04-e93a-4a3e-acbd-148991eb1bff",
+     "name": "Sol Ring",
+     "printed_name": "太陽の指輪",
+     "lang": "ja",
+     "set_code": "trc",
+     "collector_number": "499",
+     "finish": "nonfoil",
+     "color_identity": [],
+     "faces": []
+    },
+    "present": true
+   },
+   {
+    "holding_id": "alice-h2",
+    "card": {
+     "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487",
+     "printing_id": "0f003fde-be17-4159-a361-711ed0bee911",
+     "name": "Sol Ring",
+     "printed_name": null,
+     "lang": "en",
+     "set_code": "c16",
+     "collector_number": "272",
+     "finish": "nonfoil",
+     "color_identity": [],
+     "faces": []
+    },
+    "present": true
+   },
+   {
+    "holding_id": "alice-h3",
+    "card": {
+     "oracle_id": "5f694f2d-9349-4988-b2b4-788136d4293e",
+     "printing_id": "557fcd17-6cb3-414a-b2b1-ea9ae32e5aec",
+     "name": "Kraum, Ludevic's Opus",
+     "printed_name": null,
+     "lang": "en",
+     "set_code": "c16",
+     "collector_number": "34",
+     "finish": "foil",
+     "color_identity": [
+      "U",
+      "R"
+     ],
+     "faces": []
+    },
+    "present": true
+   },
+   {
+    "holding_id": "alice-h4",
+    "card": {
+     "oracle_id": "d15642e4-e61c-4d29-af48-de837991245e",
+     "printing_id": "bc7cbe9b-324e-42b8-94e2-36e91cb32163",
+     "name": "Tymna the Weaver",
+     "printed_name": null,
+     "lang": "en",
+     "set_code": "c16",
+     "collector_number": "48",
+     "finish": "nonfoil",
+     "color_identity": [
+      "W",
+      "B"
+     ],
+     "faces": []
+    },
+    "present": true
+   },
+   {
+    "holding_id": "alice-h5",
+    "card": {
+     "oracle_id": "70113003-be5e-406a-9aec-cb480468c36d",
+     "printing_id": "85eaf5e7-77dc-4842-a70c-ce4ac7f724df",
+     "name": "Sephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel",
+     "printed_name": null,
+     "lang": "en",
+     "set_code": "fin",
+     "collector_number": "115",
+     "finish": "nonfoil",
+     "color_identity": [
+      "B"
+     ],
+     "faces": [
+      {
+       "name": "Sephiroth, Fabled SOLDIER",
+       "printed_name": null,
+       "image_url": null
+      },
+      {
+       "name": "Sephiroth, One-Winged Angel",
+       "printed_name": null,
+       "image_url": null
+      }
+     ]
+    },
+    "present": true
+   },
+   {
+    "holding_id": "alice-h6",
+    "card": {
+     "oracle_id": "3b102ccc-7629-457c-aba6-e9b00fd50c85",
+     "printing_id": "75cf4eb8-33e7-4dfc-b890-a7e3b5c1b9d5",
+     "name": "Emet-Selch, Unsundered // Hades, Sorcerer of Eld",
+     "printed_name": null,
+     "lang": "en",
+     "set_code": "fin",
+     "collector_number": "218",
+     "finish": "nonfoil",
+     "color_identity": [
+      "U",
+      "B"
+     ],
+     "faces": [
+      {
+       "name": "Emet-Selch, Unsundered",
+       "printed_name": null,
+       "image_url": null
+      },
+      {
+       "name": "Hades, Sorcerer of Eld",
+       "printed_name": null,
+       "image_url": null
+      }
+     ]
+    },
+    "present": true
+   },
+   {
+    "holding_id": "alice-h7",
+    "card": {
+     "oracle_id": "4457ed35-7c10-48c8-9776-456485fdf070",
+     "printing_id": "0ec1f7e2-125c-4aa9-b38d-e9c026c8a2de",
+     "name": "Lightning Bolt",
+     "printed_name": "閃電擊",
+     "lang": "zht",
+     "set_code": "clb",
+     "collector_number": "187",
+     "finish": "nonfoil",
+     "color_identity": [
+      "R"
+     ],
+     "faces": []
+    },
+    "present": true
+   },
+   {
+    "holding_id": "alice-h8",
+    "card": {
+     "oracle_id": "0895c9b7-ae7d-4bb3-af17-3b75deb50a25",
+     "printing_id": "86424491-a372-40c4-bfb5-faa2b2d41d4c",
+     "name": "Command Tower",
+     "printed_name": null,
+     "lang": "en",
+     "set_code": "cmr",
+     "collector_number": "350",
+     "finish": "etched",
+     "color_identity": [],
+     "faces": []
+    },
+    "present": true
+   }
+  ]
+ },
+ "mock-subject-bob": {
+  "decks": [
+   {
+    "deck_id": "fixture-bob-dargo-jeska",
+    "revision": "r1",
+    "name": "Bob: Dargo + Jeska",
+    "format": "commander",
+    "ruleset": "arcana-custom-duel",
+    "color_identity": [
+     "R"
+    ],
+    "commanders": [
+     {
+      "card": {
+       "oracle_id": "a2414a2d-0fd8-4084-8762-ace48f70c853",
+       "printing_id": "5cd87cf8-4d5d-4aba-8dfa-800b1fb3799b",
+       "name": "Dargo, the Shipwrecker",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "cmr",
+       "collector_number": "172",
+       "finish": "nonfoil",
+       "color_identity": [
+        "R"
+       ],
+       "faces": []
+      },
+      "quantity": 1
+     },
+     {
+      "card": {
+       "oracle_id": "b1fbfcf3-6921-4417-a58e-0f5e5d34a105",
+       "printing_id": "48caf4c4-745c-4072-bf3d-1a3fa7c3bc9c",
+       "name": "Jeska, Thrice Reborn",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "cmr",
+       "collector_number": "186",
+       "finish": "nonfoil",
+       "color_identity": [
+        "R"
+       ],
+       "faces": []
+      },
+      "quantity": 1
+     }
+    ],
+    "mainboard": [
+     {
+      "card": {
+       "oracle_id": "a3fb7228-e76b-4e96-a40e-20b5fed75685",
+       "printing_id": "279df7e2-2a3b-464a-a7df-e91da28e3a8c",
+       "name": "Mountain",
+       "printed_name": null,
+       "lang": "en",
+       "set_code": "fdn",
+       "collector_number": "278",
+       "finish": "nonfoil",
+       "color_identity": [
+        "R"
+       ],
+       "faces": []
+      },
+      "quantity": 98
+     }
+    ],
+    "updated_at": "2026-11-15T00:00:00Z"
+   }
+  ],
+  "collection": []
+ }
+}

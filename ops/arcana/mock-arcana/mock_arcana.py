@@ -1,4 +1,5 @@
 import base64
+import copy
 import hashlib
 import hmac
 import html
@@ -25,6 +26,13 @@ USERS = {
     "mock-subject-alice": "Alice (mock)",
     "mock-subject-bob": "Bob (mock)",
 }
+
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures.json"), encoding="utf-8") as f:
+    data = json.load(f)
+events = []
+cursor_floor = 0
+revision_seq = 1
+DATA_SCOPES = {"collection:read", "decks:read", "events:read"}
 
 lock = threading.Lock()
 pending = {}
@@ -124,6 +132,16 @@ class Handler(BaseHTTPRequestHandler):
             return self.authorize_page(parse_qs(url.query))
         if url.path == f"{PREFIX}/me":
             return self.me()
+        if url.path == f"{PREFIX}/snapshot":
+            return self.snapshot()
+        if url.path == f"{PREFIX}/collection":
+            return self.collection()
+        if url.path == f"{PREFIX}/decks":
+            return self.decks()
+        if url.path.startswith(f"{PREFIX}/decks/"):
+            return self.deck(url.path[len(f"{PREFIX}/decks/"):])
+        if url.path == f"{PREFIX}/changes":
+            return self.changes({k: v[0] for k, v in parse_qs(url.query).items()})
         if url.path == "/health":
             return self.send_json(200, {"ok": True})
         self.api_error(404, "not_found")
@@ -138,6 +156,14 @@ class Handler(BaseHTTPRequestHandler):
             return self.revoke(self.form())
         if url.path == "/mock/revoke-subject":
             return self.revoke_subject(self.form())
+        if url.path == "/mock/touch-deck":
+            return self.touch_deck(self.form())
+        if url.path == "/mock/remove-deck":
+            return self.remove_deck(self.form())
+        if url.path == "/mock/touch-collection":
+            return self.touch_collection(self.form())
+        if url.path == "/mock/expire-cursors":
+            return self.expire_cursors()
         self.api_error(404, "not_found")
 
     def authorize_page(self, query):
@@ -244,6 +270,130 @@ class Handler(BaseHTTPRequestHandler):
         if "profile" in family["scope"].split():
             body["display_name"] = USERS[family["subject"]]
         self.send_json(200, body)
+
+
+    def bearer_family(self, scopes):
+        auth = self.headers.get("Authorization", "")
+        with lock:
+            entry = access_tokens.get(digest(auth[7:])) if auth.startswith("Bearer ") else None
+            if not entry or entry["revoked"] or entry["expires"] < time.time() or not family_alive(entry["family"]):
+                self.api_error(401, "unauthorized")
+                return None
+            family = families[entry["family"]]
+        if not set(scopes) <= set(family["scope"].split()):
+            self.api_error(403, "insufficient_scope")
+            return None
+        return family
+
+    def owned(self, family):
+        return data.setdefault(family["subject"], {"decks": [], "collection": []})
+
+    def snapshot(self):
+        family = self.bearer_family(DATA_SCOPES)
+        if not family:
+            return
+        with lock:
+            own = copy.deepcopy(self.owned(family))
+            cursor = f"c{len(events)}"
+        self.send_json(200, {"contract_version": CONTRACT_VERSION, "subject": family["subject"],
+                             "generated_at": now_iso(), "revision": f"s{revision_seq}", "cursor": cursor,
+                             "collection": {"revision": f"c{revision_seq}", "items": own["collection"]},
+                             "decks": {"revision": f"d{revision_seq}", "items": own["decks"]}})
+
+    def collection(self):
+        family = self.bearer_family({"collection:read"})
+        if not family:
+            return
+        with lock:
+            items = copy.deepcopy(self.owned(family)["collection"])
+        self.send_json(200, {"contract_version": CONTRACT_VERSION, "subject": family["subject"],
+                             "revision": f"c{revision_seq}", "items": items})
+
+    def decks(self):
+        family = self.bearer_family({"decks:read"})
+        if not family:
+            return
+        with lock:
+            items = [{k: d[k] for k in ("deck_id", "revision", "name", "updated_at")} for d in self.owned(family)["decks"]]
+        self.send_json(200, {"contract_version": CONTRACT_VERSION, "subject": family["subject"],
+                             "revision": f"d{revision_seq}", "items": items})
+
+    def deck(self, deck_id):
+        family = self.bearer_family({"decks:read"})
+        if not family:
+            return
+        with lock:
+            found = next((copy.deepcopy(d) for d in self.owned(family)["decks"] if d["deck_id"] == deck_id), None)
+        if found is None:
+            return self.api_error(404, "not_found")
+        self.send_json(200, {"contract_version": CONTRACT_VERSION, "subject": family["subject"], "deck": found})
+
+    def changes(self, query):
+        family = self.bearer_family({"events:read"})
+        if not family:
+            return
+        cursor = query.get("cursor", "")
+        limit = int(query.get("limit", "100"))
+        if not cursor.startswith("c") or not cursor[1:].isdigit() or not 1 <= limit <= 100:
+            return self.api_error(400, "invalid_request")
+        position = int(cursor[1:])
+        with lock:
+            if position < cursor_floor or position > len(events):
+                return self.api_error(410, "cursor_expired")
+            window = events[position:position + limit]
+            mine = [e for subject, e in window if subject == family["subject"]]
+            next_position = position + len(window)
+            has_more = next_position < len(events)
+        self.send_json(200, {"contract_version": CONTRACT_VERSION, "events": mine,
+                             "next_cursor": f"c{next_position}", "has_more": has_more})
+
+    def emit(self, subject, topic, resource_id, revision):
+        events.append((subject, {"event_id": secrets.token_hex(8), "topic": topic, "resource_id": resource_id,
+                                 "revision": revision, "occurred_at": now_iso()}))
+
+    def touch_deck(self, form):
+        global revision_seq
+        with lock:
+            own = data.get(form.get("subject"), {"decks": []})
+            target = next((d for d in own["decks"] if d["deck_id"] == form.get("deck_id")), None)
+            if target is None:
+                return self.send_json(404, {"error": "no such deck"})
+            revision_seq += 1
+            target["revision"] = f"r{revision_seq}"
+            target["updated_at"] = now_iso()
+            target["name"] = form.get("name") or target["name"]
+            self.emit(form["subject"], "decks.changed", target["deck_id"], target["revision"])
+        self.send_json(200, {"deck_id": target["deck_id"], "revision": target["revision"]})
+
+    def remove_deck(self, form):
+        global revision_seq
+        with lock:
+            own = data.get(form.get("subject"), {"decks": []})
+            own["decks"] = [d for d in own["decks"] if d["deck_id"] != form.get("deck_id")]
+            revision_seq += 1
+            self.emit(form.get("subject"), "decks.changed", form.get("deck_id"), f"r{revision_seq}")
+        self.send_json(200, {"removed": form.get("deck_id")})
+
+    def touch_collection(self, form):
+        global revision_seq
+        with lock:
+            own = data.get(form.get("subject"), {"collection": []})
+            for item in own["collection"]:
+                if item["holding_id"] == form.get("holding_id"):
+                    item["present"] = not item["present"]
+            revision_seq += 1
+            self.emit(form.get("subject"), "collection.changed", form.get("holding_id"), f"c{revision_seq}")
+        self.send_json(200, {"holding_id": form.get("holding_id")})
+
+    def expire_cursors(self):
+        global cursor_floor
+        with lock:
+            cursor_floor = len(events)
+        self.send_json(200, {"cursor_floor": cursor_floor})
+
+
+def now_iso():
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
 if __name__ == "__main__":

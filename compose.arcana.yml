@@ -76,7 +76,7 @@ services:
       ARCANA_API_BASE_URL: "${ARCANA_API_BASE_URL:-}"
       RUST_LOG: "manabrew_hub=info"
     volumes:
-      - ./ops/hub-data/arcana:/var/manabrew/hub
+      - ${HUB_DATA_DIR:-./ops/hub-data/arcana}:/var/manabrew/hub
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:9500/health"]
       interval: 15s

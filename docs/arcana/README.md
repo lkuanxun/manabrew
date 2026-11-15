@@ -43,6 +43,20 @@ docker compose -f compose.arcana.yml -f ops/arcana/compose.stage1.yml up -d hub
 - `ARCANA_API_BASE_URL=http://mtg-oauth-stage1-app-1:7860/api/integrations/v1`
 - client 憑證取自 Codex 寫入的 `/home/likuanxun/MTG/data/oauth-stage1/manabrew-client.json`（只讀不改）。
 
+## 單向同步（Stage C）
+
+Hub 背景每 5 秒同步一次已連結帳號的 Arcana 收藏與牌組，存進獨立的鏡像表，不碰 ManaBrew 自己的 My Decks 和收藏。
+
+Play 首頁的「Arcana decks」區塊會列出鏡像的牌組，按 Play 後才向 Scryfall 補齊卡片並開局。使用者在 Arcana 撤銷授權後，已同步的資料保留，但不再更新。
+
+模擬 Arcana 提供契約的資料端點，測試資料在 `ops/arcana/mock-arcana/fixtures.json`：Alice 有 3 副 100 張牌組與 9 筆收藏，Bob 有 1 副。另有幾個模擬操作，都用 POST、表單欄位：
+- `/mock/touch-deck`：`subject`、`deck_id`，可加 `name`
+- `/mock/remove-deck`：`subject`、`deck_id`
+- `/mock/touch-collection`：`subject`、`holding_id`
+- `/mock/expire-cursors`：不需參數
+
+`.env` 可用 `HUB_DATA_DIR` 換掉 Hub 的資料目錄。Hub 一旦綁定 issuer 就不能換，所以模擬環境和原型應該各用一個目錄，例如 `./ops/hub-data/arcana-mock`。
+
 ## 透過 Tailscale 給朋友使用
 
 Tailscale Serve 只開放 443、8443、10000 三個 HTTPS 埠，443 由 Arcana 使用。規劃：網頁與 Hub 用 `:8443`，relay 用 `:10000`。relay 位址設成完整網址：`RELAY_HOST=wss://<tailnet 主機>:10000`，這樣前端會直接使用該網址。設定 Serve 前須取得使用者同意。
