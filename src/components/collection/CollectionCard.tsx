@@ -12,7 +12,7 @@ interface CollectionCardProps {
   foil?: boolean;
   quantity: number;
   view: "text" | "grid";
-  onQuantityChange: (quantity: number) => void;
+  onQuantityChange?: (quantity: number) => void;
   onHover: (card: DeckCard, event: MouseEvent) => void;
   onLeave: () => void;
 }
@@ -33,7 +33,7 @@ export function CollectionCard({
     ? { ...baseCard, identity: { ...baseCard.identity, foil: foil ?? false } }
     : null;
   const displayName = card?.identity.name ?? name;
-  const quantityInput = (
+  const quantityInput = onQuantityChange ? (
     <Input
       type="number"
       min="0"
@@ -42,6 +42,8 @@ export function CollectionCard({
       aria-label={`Owned copies of ${displayName}`}
       onChange={(event) => onQuantityChange(Number(event.target.value))}
     />
+  ) : (
+    <span className="shrink-0 font-mono text-ui-label text-foreground">{quantity}</span>
   );
   if (view === "text") {
     return (

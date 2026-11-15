@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { Info, Layers, LibraryBig, Palette, Swords, Users } from "lucide-react";
+import { Info, Layers, Library, LibraryBig, Palette, Swords, Users } from "lucide-react";
 import { DESIGN_SYSTEM_ENABLED } from "@/config/designSystem";
 import { isFeatureEnabled } from "@/featureFlags";
 import { ROUTES } from "@/lib/constants";
@@ -40,6 +40,9 @@ export function getTopBarNav(): NavDestination[] {
     { to: ROUTES.LOBBY, label: `Multiplayer`, icon: Users },
     { to: ROUTES.DECK_EDITOR, label: `My Decks`, icon: Layers },
   ];
+  if (isFeatureEnabled("accounts")) {
+    direct.push({ to: ROUTES.MY_COLLECTION, label: `Collection`, icon: Library });
+  }
   if (isFeatureEnabled("deckHub")) {
     direct.push({ to: ROUTES.HUB, label: `Community`, icon: LibraryBig });
   }

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import { ArcanaCollection } from "@/components/collection/ArcanaCollection";
 import { CollectionCard } from "@/components/collection/CollectionCard";
 import { CollectionDeleteDialog } from "@/components/collection/CollectionDeleteDialog";
 import { CollectionQuickAdd } from "@/components/collection/CollectionQuickAdd";
@@ -25,6 +26,7 @@ import {
 import { CollectionImportDialog } from "@/components/collection/CollectionImportDialog";
 import { CardPreviewDetails } from "@/components/game/CardPreviewDetails";
 import { CardPreviewRail } from "@/components/game/CardPreviewRail";
+import { useArcanaLibrary } from "@/hooks/useArcanaLibrary";
 import { useCardCollection } from "@/hooks/useCardCollection";
 import { useCardPreview } from "@/hooks/useCardPreview";
 import { useIsShortScreen, useIsTouch } from "@/hooks/useBreakpoints";
@@ -59,6 +61,9 @@ export default function MyCollection() {
   const [previewCollapsed, setPreviewCollapsed] = useState(false);
   const [visibleRowCount, setVisibleRowCount] = useState(100);
   const preview = useCardPreview();
+  const arcana = useArcanaLibrary();
+  const [source, setSource] = useState<"mine" | "arcana" | null>(null);
+  const showArcana = arcana.available && (source ?? "arcana") === "arcana";
   const collectionRows = useMemo(
     () =>
       Object.entries(quantities)
@@ -122,18 +127,20 @@ export default function MyCollection() {
                 <h1 className="text-2xl font-semibold">My Collection</h1>
               </div>
               <p className="mt-1 text-ui-meta text-muted-foreground">
-                {loading
-                  ? `Syncing with your account\u2026`
-                  : `${Object.keys(quantities).length} collection entries`}
+                {showArcana
+                  ? `${arcana.library?.collection?.length ?? 0} cards synced from Arcana`
+                  : loading
+                    ? `Syncing with your account\u2026`
+                    : `${Object.keys(quantities).length} collection entries`}
               </p>
-              {syncError && (
+              {!showArcana && syncError && (
                 <p className="mt-1 break-words text-ui-body text-destructive">
                   Account sync failed. Changes are preserved locally and will retry on the next
                   edit.
                 </p>
               )}
             </div>
-            {isTouch ? (
+            {showArcana ? null : isTouch ? (
               <div className="flex flex-wrap gap-2">
                 <Button variant="primary" disabled={loading} onClick={() => setImportOpen(true)}>
                   <Upload className="h-4 w-4" /> Import
@@ -184,6 +191,27 @@ export default function MyCollection() {
             )}
           </div>
 
+          {arcana.available && (
+            <div className="mt-4 flex items-center gap-1">
+              <Button
+                variant={showArcana ? "ghost" : "selected"}
+                size="sm"
+                aria-pressed={!showArcana}
+                onClick={() => setSource("mine")}
+              >
+                My collection
+              </Button>
+              <Button
+                variant={showArcana ? "selected" : "ghost"}
+                size="sm"
+                aria-pressed={showArcana}
+                onClick={() => setSource("arcana")}
+              >
+                Arcana
+              </Button>
+            </div>
+          )}
+
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <div
               className={cn(
@@ -195,31 +223,35 @@ export default function MyCollection() {
               <Input
                 className="pl-9"
                 value={query}
-                placeholder={`Search your collection`}
+                placeholder={
+                  showArcana ? `Search your Arcana collection` : `Search your collection`
+                }
                 onChange={(event) => {
                   setQuery(event.target.value);
                   setVisibleRowCount(100);
                 }}
               />
             </div>
-            <CollectionQuickAdd
-              disabled={loading}
-              getCount={(name) => collectionQuantityForName(quantities, name)}
-              onAdd={(name, quantity, setCode, collectorNumber, foil) => {
-                const cardKey = collectionCardKey(name, setCode, collectorNumber, foil);
-                updateQuantity(cardKey, (quantities[cardKey] ?? 0) + quantity);
-              }}
-              onHover={(card, event) => {
-                if (!chooseImageUrisForCard(card, { frontOnly: true })) {
-                  preview.handleMouseLeave();
-                  return;
-                }
-                preview.handleMouseEnter(deckCardToPreviewDto(scryfallToDeckCard(card)), event, {
-                  placement: "pinned",
-                });
-              }}
-              onLeave={preview.handleMouseLeave}
-            />
+            {!showArcana && (
+              <CollectionQuickAdd
+                disabled={loading}
+                getCount={(name) => collectionQuantityForName(quantities, name)}
+                onAdd={(name, quantity, setCode, collectorNumber, foil) => {
+                  const cardKey = collectionCardKey(name, setCode, collectorNumber, foil);
+                  updateQuantity(cardKey, (quantities[cardKey] ?? 0) + quantity);
+                }}
+                onHover={(card, event) => {
+                  if (!chooseImageUrisForCard(card, { frontOnly: true })) {
+                    preview.handleMouseLeave();
+                    return;
+                  }
+                  preview.handleMouseEnter(deckCardToPreviewDto(scryfallToDeckCard(card)), event, {
+                    placement: "pinned",
+                  });
+                }}
+                onLeave={preview.handleMouseLeave}
+              />
+            )}
             <div className="flex shrink-0 overflow-hidden rounded-md border">
               <button
                 type="button"
@@ -260,51 +292,70 @@ export default function MyCollection() {
             </div>
           </div>
 
-          <div
-            className={cn(
-              "mt-4",
-              view === "text"
-                ? "overflow-hidden rounded-xl border"
-                : "grid grid-cols-2 gap-x-4 gap-y-6 @min-[36rem]:grid-cols-3 @min-[56rem]:grid-cols-4",
-            )}
-          >
-            {visibleRows.map(({ cardKey, name, setCode, collectorNumber, foil, quantity }) => (
-              <CollectionCard
-                key={cardKey}
-                name={name}
-                setCode={setCode}
-                collectorNumber={collectorNumber}
-                foil={foil}
-                quantity={quantity}
-                view={view}
-                onQuantityChange={(nextQuantity) => updateQuantity(cardKey, nextQuantity)}
-                onHover={(card, event) =>
-                  preview.handleMouseEnter(deckCardToPreviewDto(card), event, {
-                    placement: "pinned",
-                  })
-                }
-                onLeave={preview.handleMouseLeave}
-              />
-            ))}
-            {!loading && rows.length === 0 && (
+          {showArcana ? (
+            <ArcanaCollection
+              arcana={arcana}
+              query={query}
+              view={view}
+              onHover={(card, event) =>
+                preview.handleMouseEnter(deckCardToPreviewDto(card), event, {
+                  placement: "pinned",
+                })
+              }
+              onLeave={preview.handleMouseLeave}
+            />
+          ) : (
+            <>
               <div
                 className={cn(
-                  "px-4 py-16 text-center text-ui-body text-muted-foreground",
-                  view === "grid" && "col-span-full rounded-xl border",
+                  "mt-4",
+                  view === "text"
+                    ? "overflow-hidden rounded-xl border"
+                    : "grid grid-cols-2 gap-x-4 gap-y-6 @min-[36rem]:grid-cols-3 @min-[56rem]:grid-cols-4",
                 )}
               >
-                {query
-                  ? `No cards match your search.`
-                  : `Import a CSV or text list to start your collection.`}
+                {visibleRows.map(({ cardKey, name, setCode, collectorNumber, foil, quantity }) => (
+                  <CollectionCard
+                    key={cardKey}
+                    name={name}
+                    setCode={setCode}
+                    collectorNumber={collectorNumber}
+                    foil={foil}
+                    quantity={quantity}
+                    view={view}
+                    onQuantityChange={(nextQuantity) => updateQuantity(cardKey, nextQuantity)}
+                    onHover={(card, event) =>
+                      preview.handleMouseEnter(deckCardToPreviewDto(card), event, {
+                        placement: "pinned",
+                      })
+                    }
+                    onLeave={preview.handleMouseLeave}
+                  />
+                ))}
+                {!loading && rows.length === 0 && (
+                  <div
+                    className={cn(
+                      "px-4 py-16 text-center text-ui-body text-muted-foreground",
+                      view === "grid" && "col-span-full rounded-xl border",
+                    )}
+                  >
+                    {query
+                      ? `No cards match your search.`
+                      : `Import a CSV or text list to start your collection.`}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          {visibleRows.length < rows.length && (
-            <div className="mt-6 flex justify-center">
-              <Button variant="outline" onClick={() => setVisibleRowCount((count) => count + 100)}>
-                Show 100 more · {rows.length - visibleRows.length} remaining
-              </Button>
-            </div>
+              {visibleRows.length < rows.length && (
+                <div className="mt-6 flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => setVisibleRowCount((count) => count + 100)}
+                  >
+                    Show 100 more · {rows.length - visibleRows.length} remaining
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
