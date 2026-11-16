@@ -54,6 +54,7 @@ import { usePresetDecks, usePresetDecksResolved } from "@/stores/usePresetDecksS
 import { useQuickPlaytest } from "@/hooks/useQuickPlaytest";
 import { useArcanaLibrary } from "@/hooks/useArcanaLibrary";
 import { ArcanaDeckGrid } from "@/components/deck/ArcanaDeckGrid";
+import { arcanaDeckToDeck } from "@/lib/arcanaDeck";
 import { useMyDeckHubEntries } from "@/hooks/useMyDeckHubEntries";
 import { useAccountDecks } from "@/hooks/useAccountDecks";
 import { useAccountDecksStore } from "@/stores/useAccountDecksStore";
@@ -123,6 +124,7 @@ export default function DeckEditor() {
   const isReadOnly = useDeckStore((s) => s.isReadOnly);
   const editorSessionId = useDeckStore((s) => s.editorSessionId);
   const loadPresetDeck = useDeckStore((s) => s.loadPresetDeck);
+  const loadArcanaDeck = useDeckStore((s) => s.loadArcanaDeck);
   const presetDecks = usePresetDecks();
   const presetDecksResolved = usePresetDecksResolved();
   const { quickPlaytest } = useQuickPlaytest();
@@ -257,6 +259,8 @@ export default function DeckEditor() {
     };
   }, []);
   const restoredParamRef = useRef<string | null>(null);
+  const loadingArcanaParamRef = useRef<string | null>(null);
+  const arcanaDecks = arcana.library?.decks;
   useEffect(() => {
     const deckParam = searchParams.get("deck");
     if (!deckParam) {
@@ -293,6 +297,26 @@ export default function DeckEditor() {
       restoredParamRef.current = deckParam;
       return;
     }
+    if (deckParam.startsWith("arcana:")) {
+      const source = arcanaDecks?.find((deck) => `arcana:${deck.deck_id}` === deckParam);
+      if (!source || loadingArcanaParamRef.current === deckParam) return;
+      loadingArcanaParamRef.current = deckParam;
+      void arcanaDeckToDeck(source)
+        .then(({ deck, unresolved }) => {
+          if (new URLSearchParams(window.location.search).get("deck") !== deckParam) return;
+          if (unresolved.length > 0) {
+            toast.warning(`Could not find ${unresolved.length} card(s): ${unresolved.join(", ")}`);
+          }
+          restoredParamRef.current = deckParam;
+          loadArcanaDeck(deck);
+          resetDeckHistory();
+          setStateView("editor");
+        })
+        .finally(() => {
+          loadingArcanaParamRef.current = null;
+        });
+      return;
+    }
     if (deckParam.startsWith("account:")) {
       const accountDeckId = deckParam.slice("account:".length);
       const detail = accountDeckDetails[accountDeckId];
@@ -317,8 +341,10 @@ export default function DeckEditor() {
     searchParams,
     presetDecks,
     accountDeckDetails,
+    arcanaDecks,
     savedDecks,
     loadAccountDeck,
+    loadArcanaDeck,
     loadPresetDeck,
     loadSavedDeck,
     clearDeck,
@@ -328,6 +354,9 @@ export default function DeckEditor() {
     setSearchParams,
     routeState,
   ]);
+  function handleOpenArcana(deckId: string) {
+    setSearchParams({ deck: `arcana:${deckId}` }, { state: { deckEditorFromList: true } });
+  }
   function toggleColor(color: string) {
     setColorFilter((prev) =>
       prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color],
@@ -743,7 +772,7 @@ export default function DeckEditor() {
                     ))}
                   </div>
                 )}
-              {showArcana && <ArcanaDeckGrid arcana={arcana} />}
+              {showArcana && <ArcanaDeckGrid arcana={arcana} onOpen={handleOpenArcana} />}
               {!showArcana && !deckCatalogPending && (
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,16rem),1fr))] gap-3">
                   <div className={cn("group relative", compactAddDeck && "col-span-full")}>

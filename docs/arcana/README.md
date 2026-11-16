@@ -12,6 +12,7 @@
 | relay       | 大廳與牌局轉送                                        | 127.0.0.1:8781 |
 | hub         | 帳號、牌組；資料在 `ops/hub-data/arcana/`（不進 Git） | 只經 web       |
 | node        | 伺服器端 Forge 引擎與 bot                             | 無             |
+| images      | Scryfall 卡圖快取代理，經 web 的 `/scryfall-art/`     | 只經 web       |
 | mock-arcana | 模擬 Arcana 認證端點（profile `mock-arcana`）         | 127.0.0.1:8790 |
 
 ```bash
@@ -20,6 +21,16 @@ docker compose -f compose.arcana.yml down
 ```
 
 設定放在 repo 根目錄的 `.env`（不進 Git）：`MANABREW_SERVER_KEY`、`ARCANA_*`、`COMPOSE_PROFILES`。
+
+web 對檔名帶雜湊的 `/assets/*` 和 `/wasm/cardset.<hash>.rkyv` 加上一年的 `immutable` 快取標頭。重建映像會改掉檔案時間和 ETag，沒有這個標頭的話，每次重建後手機都要重新下載約 28 MB（壓縮後）的引擎檔。
+
+### 卡圖快取
+
+`images` 是 nginx 快取代理，只轉發 `cards.scryfall.io` 的卡圖路徑，存在 Docker volume `scryfall-images`。上限 10 GB，超過時先刪最久沒用的；一年沒被讀過的也會刪。前端用建置參數 `VITE_SCRYFALL_IMAGE_BASE=/scryfall-art/` 改走這條路，代理失敗時遊戲畫面會退回直接連 Scryfall。重建 web 不會清掉快取；要清空就刪掉這個 volume。
+
+```bash
+docker exec manabrew-arcana-images-1 du -sh /var/cache/scryfall
+```
 
 ## Arcana 登入
 
@@ -48,7 +59,7 @@ docker compose -f compose.arcana.yml -f ops/arcana/compose.stage1.yml up -d hub
 
 ## 單向同步（Stage C）
 
-Hub 背景每 5 秒同步一次已連結帳號的 Arcana 收藏與牌組，存進獨立的鏡像表，不碰 ManaBrew 自己的 My Decks 和收藏。My Decks 和 Collection 頁都有「Arcana」切換，可唯讀瀏覽同步來的牌組與收藏；收藏依印刷版本與 finish 合併張數。
+Hub 背景每 5 秒同步一次已連結帳號的 Arcana 收藏與牌組，存進獨立的鏡像表，不碰 ManaBrew 自己的 My Decks 和收藏。My Decks 和 Collection 頁都有「Arcana」切換，可唯讀瀏覽同步來的牌組與收藏；點 Arcana 牌組可用唯讀編輯器查看內容，「Copy and edit」會複製成獨立的 ManaBrew 牌組，之後不再跟著 Arcana 更新；收藏依印刷版本與 finish 合併張數。
 
 Play 首頁的「Arcana decks」區塊會列出鏡像的牌組，按 Play 後才向 Scryfall 補齊卡片並開局。使用者在 Arcana 撤銷授權後，已同步的資料保留，但不再更新。
 
@@ -85,4 +96,4 @@ Tailscale Serve 只開放 443、8443、10000 三個 HTTPS 埠，443 由 Arcana �
 - Duel Commander：關閉指揮官傷害判負，不允許備牌。
 - Hub：新增 Arcana 登入（`auth/arcana.rs`，資料表另有版本序列，見 `docs/agents/HUB.md`）。
 - 前端：登入對話框的 Arcana 按鈕。
-- 介面精簡：關閉 Deck Hub（Community）；導覽列只留 Singleplayer、Multiplayer、My Decks、Collection；首頁拿掉 Card Search、Life Tracker、My Collection 入口和上游的 Discord、GitHub 連結；隱藏 Limited。頁面仍可用網址開啟。
+- 介面精簡：關閉 Deck Hub（Community）；導覽列只留 Singleplayer、Multiplayer、My Decks、Collection；首頁拿掉 Card Search、Life Tracker、My Collection 入口和上游的 Discord、GitHub 連結；隱藏 Limited。頁面仍可用網址開啟。牌組編輯器的 Deck Analysis 拿掉 Tokens、Collection、Budget、Replacements 和 Bracket，狀態選單也拿掉 Collection 與 Budget。

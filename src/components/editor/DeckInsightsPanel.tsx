@@ -1,17 +1,13 @@
-import { useState, type MouseEvent, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { DeckCard } from "@/protocol/deck";
 import type { EditorDeck } from "@/types/manabrew";
-import { DeckBudgetPanel } from "./DeckBudgetPanel";
-import { DeckCollectionPanel } from "./DeckCollectionPanel";
 import { DeckHealthPanel } from "./DeckHealthPanel";
 import { DeckGoalsPanel } from "./DeckGoalsPanel";
 import { DeckIntentPanel } from "./DeckIntentPanel";
 import { DeckStats } from "./DeckStats";
 import { ManaProbabilityPanel } from "./ManaProbabilityPanel";
-import { ReplacementSuggestionsPanel } from "./ReplacementSuggestionsPanel";
-type InsightSection = "overview" | "mana" | "collection" | "budget" | "replacements";
+type InsightSection = "overview" | "mana";
 const SECTIONS: {
   id: InsightSection;
   label: string;
@@ -24,18 +20,6 @@ const SECTIONS: {
     id: "mana",
     label: `Mana`,
   },
-  {
-    id: "collection",
-    label: `Collection`,
-  },
-  {
-    id: "budget",
-    label: `Budget`,
-  },
-  {
-    id: "replacements",
-    label: `Replacements`,
-  },
 ];
 export function DeckInsightsPanel({
   mode = "all",
@@ -46,10 +30,6 @@ export function DeckInsightsPanel({
   onBucketClick,
   onShowUnsupported,
   onOpenSearch,
-  cardSize,
-  onCardHover,
-  onCardLeave,
-  onOptimizeOwnedPrintings,
 }: {
   mode?: "all" | "analyze" | "improve";
   deck: EditorDeck;
@@ -59,17 +39,10 @@ export function DeckInsightsPanel({
   onBucketClick: (bucket: number | null) => void;
   onShowUnsupported: () => void;
   onOpenSearch?: () => void;
-  cardSize: number;
-  onCardHover?: (card: DeckCard, event: MouseEvent) => void;
-  onCardLeave?: () => void;
-  onOptimizeOwnedPrintings?: () => void;
 }) {
   const [openSections, setOpenSections] = useState<Record<InsightSection, boolean>>({
     overview: true,
     mana: true,
-    collection: true,
-    budget: true,
-    replacements: true,
   });
   function toggleSection(section: InsightSection) {
     setOpenSections((current) => ({ ...current, [section]: !current[section] }));
@@ -80,11 +53,7 @@ export function DeckInsightsPanel({
       className="min-w-0 overflow-hidden rounded-2xl bg-muted/10 px-4 sm:px-5"
     >
       {SECTIONS.filter(({ id }) =>
-        mode === "all"
-          ? true
-          : mode === "analyze"
-            ? id === "mana" || id === "collection" || id === "budget"
-            : id === "overview" || id === "replacements",
+        mode === "all" ? true : mode === "analyze" ? id === "mana" : id === "overview",
       ).map(({ id, label }) => (
         <InsightSectionPanel
           key={id}
@@ -115,22 +84,6 @@ export function DeckInsightsPanel({
               />
               <ManaProbabilityPanel deck={deck} />
             </>
-          )}
-          {id === "collection" && (
-            <DeckCollectionPanel
-              cardSize={cardSize}
-              onHover={onCardHover}
-              onLeave={onCardLeave}
-              onOptimizeOwnedPrintings={onOptimizeOwnedPrintings}
-            />
-          )}
-          {id === "budget" && <DeckBudgetPanel />}
-          {id === "replacements" && (
-            <ReplacementSuggestionsPanel
-              cardSize={cardSize}
-              onHover={onCardHover}
-              onLeave={onCardLeave}
-            />
           )}
         </InsightSectionPanel>
       ))}

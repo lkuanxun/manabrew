@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, CircleDollarSign, LibraryBig, Wrench } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Wrench } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,15 +11,11 @@ import { cn } from "@/lib/utils";
 interface DeckStatusSummaryProps {
   legalityErrors: number;
   unsupportedCards: number;
-  collectionGaps: number;
-  budgetTracked: boolean;
-  onNavigate: (target: "validation" | "collection" | "budget") => void;
+  onNavigate: () => void;
 }
 export function DeckStatusSummary({
   legalityErrors,
   unsupportedCards,
-  collectionGaps,
-  budgetTracked,
   onNavigate,
 }: DeckStatusSummaryProps) {
   const issueCount = legalityErrors + unsupportedCards;
@@ -48,26 +44,14 @@ export function DeckStatusSummary({
           label={`Format legality`}
           value={legalityErrors > 0 ? `${legalityErrors} issues` : "Legal"}
           warning={legalityErrors > 0}
-          onSelect={() => onNavigate("validation")}
+          onSelect={onNavigate}
         />
         <StatusItem
           icon={<Wrench className="h-3.5 w-3.5" />}
           label={`Engine support`}
           value={unsupportedCards > 0 ? `${unsupportedCards} unsupported` : "Supported"}
           warning={unsupportedCards > 0}
-          onSelect={() => onNavigate("validation")}
-        />
-        <StatusItem
-          icon={<LibraryBig className="h-3.5 w-3.5" />}
-          label={`Collection`}
-          value={collectionGaps > 0 ? `${collectionGaps} gaps` : "Complete"}
-          onSelect={() => onNavigate("collection")}
-        />
-        <StatusItem
-          icon={<CircleDollarSign className="h-3.5 w-3.5" />}
-          label={`Budget`}
-          value={budgetTracked ? "Tracked" : "Not set"}
-          onSelect={() => onNavigate("budget")}
+          onSelect={onNavigate}
         />
       </DropdownMenuContent>
     </DropdownMenu>

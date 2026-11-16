@@ -88,7 +88,6 @@ import { useCardPreview, type CardPreviewController } from "@/hooks/useCardPrevi
 import { CardDetailModal } from "./CardDetailModal";
 import { DeckLabelsModal } from "./DeckLabelsModal";
 import { DeckValidationPanel } from "./DeckValidationPanel";
-import { DeckBracketPanel } from "./DeckBracketPanel";
 import { CombosPanel } from "./CombosPanel";
 import { useDeckAnalysis } from "@/hooks/useDeckAnalysis";
 import { useDeckRoles } from "@/hooks/useDeckRoles";
@@ -111,8 +110,6 @@ import {
   MAX_CARD_SIZE,
 } from "./deckBuilder.utils";
 import { exportToArena, exportWithPrintings } from "./deckExport";
-import { TokenSection } from "./TokenSection";
-import { useDerivedTokens, mergeDerivedAndCustomized } from "@/hooks/useDerivedTokens";
 import {
   buildDeckSnapshot,
   setUnsavedState,
@@ -268,7 +265,6 @@ export function DeckBuilder({
     untagCard,
     setCoverCard,
     setStackPositions,
-    resetTokenPrint,
     updateAccountDeckVersion,
     linkSavedDeckToAccount,
     loadAccountDeck,
@@ -283,11 +279,6 @@ export function DeckBuilder({
   useEffect(() => {
     onSelectionChange?.(selectedCards);
   }, [onSelectionChange, selectedCards]);
-  const derivedTokens = useDerivedTokens(currentDeck);
-  const mergedTokens = useMemo(
-    () => mergeDerivedAndCustomized(derivedTokens, currentDeck.tokens),
-    [derivedTokens, currentDeck.tokens],
-  );
   const [deckFilter, setDeckFilter] = useState("");
   const deferredDeckFilter = useDeferredValue(deckFilter);
   const [cmcFilter, setCmcFilter] = useState<number | null>(null);
@@ -410,17 +401,10 @@ export function DeckBuilder({
     const next = [...sections].find((section) => section.getBoundingClientRect().top > top + 48);
     (next ?? sections[0]).scrollIntoView({ behavior: "smooth", block: "start" });
   }
-  function navigateToDeckStatus(target: "validation" | "collection" | "budget") {
-    if (target !== "validation") setAnalysisOpen(true);
-    window.setTimeout(() => {
-      const selector =
-        target === "validation"
-          ? "[data-editor-validation], [data-editor-section='build']"
-          : `[data-editor-insight='${target}']`;
-      editorScrollRef.current
-        ?.querySelector<HTMLElement>(selector)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+  function navigateToDeckStatus() {
+    editorScrollRef.current
+      ?.querySelector<HTMLElement>("[data-editor-validation], [data-editor-section='build']")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   const supplementaryCards = useMemo(
     () => [
@@ -558,13 +542,6 @@ export function DeckBuilder({
       useScryfallStore.getState().setActiveLocalizedCards([], scryfallLocale);
     };
   }, [localizedCards, localizedDetailsKey, scryfallLocale]);
-  const collectionGapCount = useMemo(
-    () =>
-      [...ownershipByName.values()].filter(
-        (ownership) => ownership.status === "missing" || ownership.status === "partial",
-      ).length,
-    [ownershipByName],
-  );
   const isCardOwned = useCallback(
     (card: DeckCard) => collectionQuantityForName(collectionQuantities, card.identity.name) > 0,
     [collectionQuantities],
@@ -966,14 +943,6 @@ export function DeckBuilder({
       deckCard.identity.name,
       null,
       deckCard.identity,
-    );
-  }
-  function handleShowTokenInfo(token: DeckCard) {
-    openDetail(
-      { setCode: token.identity.setCode, collectorNumber: token.identity.cardNumber },
-      token.identity.name,
-      token,
-      null,
     );
   }
   function handleRemoveOneFromSide(cardName: string) {
@@ -1628,7 +1597,11 @@ export function DeckBuilder({
         >
           <Bookmark className="h-3.5 w-3.5 text-warning shrink-0" />
           <span className="shrink-0 text-ui-meta font-semibold uppercase tracking-wide text-warning">
-            {readOnlySource === "hub" ? `Hub snapshot — read only` : `Starter deck — read only`}
+            {readOnlySource === "hub"
+              ? `Hub snapshot — read only`
+              : readOnlySource === "arcana"
+                ? `Arcana deck — read only`
+                : `Starter deck — read only`}
           </span>
           <span
             className={cn(
@@ -1693,8 +1666,6 @@ export function DeckBuilder({
               <DeckStatusSummary
                 legalityErrors={deckValidation.errors.length}
                 unsupportedCards={unsupportedNames.size}
-                collectionGaps={collectionGapCount}
-                budgetTracked={currentDeck.editor?.budgetAmount !== undefined}
                 onNavigate={navigateToDeckStatus}
               />
             )}
@@ -2345,28 +2316,6 @@ export function DeckBuilder({
                 </button>
                 {analysisOpen && (
                   <div className="space-y-5">
-                    {mergedTokens.length > 0 && (
-                      <TokenSection
-                        key={`tokens-${editorSessionId}`}
-                        tokens={mergedTokens}
-                        customizedTokens={currentDeck.tokens}
-                        cardSize={cardSize}
-                        canCustomize={!isReadOnly}
-                        onShowInfo={handleShowTokenInfo}
-                        onCustomize={(card) => setCustomization({ card, token: true })}
-                        onResetPrint={(token) =>
-                          executeDeckEdit(`Reset ${token.identity.name} token printing`, () =>
-                            resetTokenPrint(token),
-                          )
-                        }
-                        onHover={(token, e) =>
-                          preview.handleMouseEnter(deckCardToPreviewDto(token), e, {
-                            useDelay: true,
-                          })
-                        }
-                        onLeave={preview.handleMouseLeave}
-                      />
-                    )}
                     <DeckInsightsPanel
                       key={`insights-${editorSessionId}`}
                       deck={currentDeck}
@@ -2376,17 +2325,8 @@ export function DeckBuilder({
                       onBucketClick={setCmcFilter}
                       onShowUnsupported={() => setDeckFilter("is:unsupported")}
                       onOpenSearch={onToggleSearch}
-                      cardSize={cardSize}
-                      onCardHover={(card, event) =>
-                        preview.handleMouseEnter(deckCardToPreviewDto(card), event, {
-                          useDelay: true,
-                        })
-                      }
-                      onCardLeave={preview.handleMouseLeave}
-                      onOptimizeOwnedPrintings={() => setPrintingOptimizerOpen(true)}
                     />
                     <CombosPanel />
-                    <DeckBracketPanel />
                   </div>
                 )}
               </div>

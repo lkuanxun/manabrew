@@ -376,7 +376,7 @@ interface DeckState {
   currentDeckId: string | null;
   editorSessionId: string;
   isReadOnly: boolean;
-  readOnlySource: "preset" | "hub" | null;
+  readOnlySource: "preset" | "hub" | "arcana" | null;
   savedDecks: SavedDeck[];
   migrationError: boolean;
   addToMain: (card: DeckCard) => void;
@@ -392,6 +392,7 @@ interface DeckState {
   loadDeck: (deck: EditorDeck) => void;
   loadPresetDeck: (deck: EditorDeck) => void;
   loadHubDeck: (deck: EditorDeck) => void;
+  loadArcanaDeck: (deck: EditorDeck) => void;
   importReadOnlyDeck: () => string | null;
   addSavedDeck: (deck: EditorDeck) => string;
   mergeIntoCurrentDeck: (sections: {
@@ -660,6 +661,14 @@ export const useDeckStore = create<DeckState>()(
             editorSessionId: crypto.randomUUID(),
             isReadOnly: true,
             readOnlySource: "hub",
+          }),
+        loadArcanaDeck: (deck) =>
+          set({
+            currentDeck: normalizeDeck(deck),
+            currentDeckId: null,
+            editorSessionId: crypto.randomUUID(),
+            isReadOnly: true,
+            readOnlySource: "arcana",
           }),
         importReadOnlyDeck: () => {
           const state = get();

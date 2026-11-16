@@ -13,6 +13,11 @@ export function arcanaCardImageUrl(card: ArcanaCard): string {
   return card.faces[0]?.image_url ?? `${SCRYFALL_API}/cards/${card.printing_id}?format=image`;
 }
 
+export function arcanaCardArtUrl(card: ArcanaCard): string {
+  const id = card.printing_id;
+  return `https://cards.scryfall.io/art_crop/front/${id[0]}/${id[1]}/${id}.jpg`;
+}
+
 async function resolvePrinting(card: ArcanaCard): Promise<DeckCard | null> {
   try {
     return scryfallToDeckCard(await enqueueCardLookup({ id: card.printing_id }));
