@@ -4,6 +4,7 @@ import { getPlatform, getPlatformType } from "@/platform";
 import { cachedCardGlintAsset } from "@/lib/cardGlintAssetCache";
 
 const SCRYFALL_IMAGE_CDN_ORIGIN = "https://cards.scryfall.io/";
+const SCRYFALL_IMAGE_PROXY_BASE = import.meta.env.VITE_SCRYFALL_IMAGE_BASE;
 
 const SCRYFALL_IMAGE_HOSTS = new Set([
   "cards.scryfall.io",
@@ -20,6 +21,11 @@ export function cacheKeyForImage(url: string): string | null {
   if (!url.startsWith(SCRYFALL_IMAGE_CDN_ORIGIN)) return null;
   const key = url.slice(SCRYFALL_IMAGE_CDN_ORIGIN.length).split(/[?#]/)[0];
   return key || null;
+}
+
+export function proxiedScryfallImageUrl(url: string): string | null {
+  const key = SCRYFALL_IMAGE_PROXY_BASE ? cacheKeyForImage(url) : null;
+  return key ? `${SCRYFALL_IMAGE_PROXY_BASE}${key}` : null;
 }
 
 export function isScryfallImageUrl(url: string): boolean {
@@ -83,7 +89,7 @@ async function fetchImageBytes(url: string): Promise<Blob> {
   const key = cacheKeyForImage(url);
   if (key) {
     const local = (await localCardArtRouteAvailable()) ? `/scryfall-img/${key}` : null;
-    for (const candidate of [local, lanArtUrl(key)]) {
+    for (const candidate of [local, proxiedScryfallImageUrl(url), lanArtUrl(key)]) {
       if (!candidate) continue;
       try {
         const res = await fetch(candidate);

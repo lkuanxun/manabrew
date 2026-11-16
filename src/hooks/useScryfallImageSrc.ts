@@ -4,6 +4,7 @@ import {
   isScryfallImageUrl,
   loadScryfallImage,
   peekScryfallImage,
+  proxiedScryfallImageUrl,
 } from "@/lib/scryfallImageSource";
 import { cachedCardGlintAsset, offlineCacheAvailable } from "@/lib/cardGlintAssetCache";
 
@@ -17,7 +18,9 @@ export function useScryfallImageSrc(url: string | undefined): string | undefined
     let active = true;
     void (async () => {
       const installed = native || (await cachedCardGlintAsset(url).catch(() => undefined));
-      const source = installed ? await loadScryfallImage(url) : url;
+      const source = installed
+        ? await loadScryfallImage(url)
+        : (proxiedScryfallImageUrl(url) ?? url);
       if (active) setResolved({ url, source });
     })().catch(() => {
       if (active) setResolved({ url, source: url });
@@ -26,6 +29,6 @@ export function useScryfallImageSrc(url: string | undefined): string | undefined
       active = false;
     };
   }, [url, eligible, native]);
-  if (!eligible || !url) return url;
+  if (!eligible || !url) return url && (proxiedScryfallImageUrl(url) ?? url);
   return peekScryfallImage(url) ?? (resolved?.url === url ? resolved.source : undefined);
 }

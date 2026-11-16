@@ -3,6 +3,9 @@
 
 	encode zstd gzip
 
+	@hashedAssets path_regexp hashedAssets ^/(assets/.+|wasm/cardset\.[0-9a-f]+\.rkyv)$
+	header @hashedAssets Cache-Control "public, max-age=31536000, immutable"
+
 	# Runtime relay config (rewritten from RELAY_* env on start) — never cache it.
 	@config path /config.js
 	handle @config {
@@ -23,6 +26,15 @@
 			header_down -Cache-Control
 		}
 		header Cache-Control "public, max-age=604800"
+		header Cross-Origin-Resource-Policy "same-origin"
+	}
+
+	@scryfallImages path /scryfall-art/*
+	handle @scryfallImages {
+		uri strip_prefix /scryfall-art
+		reverse_proxy images:80 {
+			header_down -X-Cache-Status
+		}
 		header Cross-Origin-Resource-Policy "same-origin"
 	}
 
