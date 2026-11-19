@@ -51,17 +51,12 @@ export function computeBoardLayout(
   const dividerY = topHeight;
   const overview = opponentLayout === "overview" && !compact && opponentCount > 1;
 
-  const opponentHeight = overview ? topHeight / count : topHeight;
   const opponents: OpponentRegion[] = [];
   for (let i = 0; i < count; i++) {
-    const x = overview ? 0 : i * collapsedOpponentWidth(width, count);
+    const x = overview ? Math.round((i * width) / count) : i * collapsedOpponentWidth(width, count);
+    const right = overview ? Math.round(((i + 1) * width) / count) : width;
     opponents.push({
-      rect: {
-        x,
-        y: overview ? i * opponentHeight : 0,
-        width: Math.max(1, width - x),
-        height: opponentHeight,
-      },
+      rect: { x, y: 0, width: Math.max(1, right - x), height: topHeight },
       orientation: "top",
     });
   }

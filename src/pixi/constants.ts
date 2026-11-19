@@ -122,9 +122,11 @@ export const Z_OVERLAY_OFFSET = 100;
 export const Z_SELECTION_BADGE = 9500;
 export const Z_HAND_ACTIONS_MENU = 200;
 
-export const BG_ALPHA_IDLE = 0;
-export const FELT_HIT_ALPHA = 0.001;
+export const REGION_FILL_LOCAL_ALPHA = 0.1;
+export const REGION_FILL_OPPONENT_ALPHA = 0.28;
+export const REGION_GAP_PX = 3;
 
+export const BG_ALPHA_IDLE = 0;
 export const BG_ALPHA_DROP = 0.15;
 export const DROP_STROKE_ALPHA = 0.8;
 export const DROP_TINT_ALPHA = 0.06;

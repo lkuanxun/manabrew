@@ -53,6 +53,7 @@ export class HandController {
   private lastState: HandState | null = null;
   private vScale = 1;
   private compact = false;
+  private flat = false;
   private sheetOpen = false;
   private peek = false;
   private rulesViewDefault = false;
@@ -118,6 +119,11 @@ export class HandController {
     this.compact = compact;
     if (this.lastState) this.updateHand(this.lastState);
   }
+  setFlat(flat: boolean): void {
+    if (this.flat === flat) return;
+    this.flat = flat;
+    if (this.lastState) this.updateHand(this.lastState);
+  }
   setSheetOpen(open: boolean): void {
     if (this.sheetOpen === open) return;
     this.sheetOpen = open;
@@ -131,6 +137,7 @@ export class HandController {
   }
 
   private bottomSinkFrac(): number {
+    if (this.flat) return 0;
     if (this.peek) return HAND_BOTTOM_SINK_FRAC_PEEK;
     if (this.sheetOpen) return HAND_BOTTOM_SINK_FRAC_SHEET;
     return this.compact ? HAND_BOTTOM_SINK_FRAC_COMPACT : HAND_BOTTOM_SINK_FRAC;
@@ -183,6 +190,7 @@ export class HandController {
       dims.maxSpread,
       dims.minSpread,
       dims.spreadWidth,
+      !this.flat,
     );
     const layout = computeHandLayout(
       cards.length,
@@ -194,6 +202,7 @@ export class HandController {
       this.hoveredIndex,
       dims.hoverLift,
       dims.neighborPush,
+      !this.flat,
     );
 
     const zone = this.host.getPlayZone();
@@ -354,6 +363,7 @@ export class HandController {
       dims.maxSpread,
       dims.minSpread,
       dims.spreadWidth,
+      !this.flat,
     );
     const zone = this.host.getPlayZone();
     const centerX = zone.x + zone.width / 2;
@@ -509,7 +519,7 @@ export class HandController {
     const zone = this.host.getPlayZone();
     const dims = this.getDimensions();
     const sink = this.bottomSinkFrac();
-    return zone.y + zone.height + dims.cardH * sink;
+    return zone.y + zone.height + dims.cardH * sink - (this.flat ? GAP : 0);
   }
 
   getOriginSeed(): { x: number; y: number; scale: number } {
@@ -533,9 +543,22 @@ export class HandController {
     const cardW = Math.round(base.cardW * scale);
     const cardH = Math.round(base.cardH * scale);
     const sink = this.bottomSinkFrac();
-    const available = Math.max(cardW, this.host.getPlayZone().width - cardW);
+    const zoneWidth = this.host.getPlayZone().width;
+    const available = Math.max(cardW, this.flat ? zoneWidth - GAP * 2 : zoneWidth - cardW);
     const count = this.lastState?.cards.length ?? 0;
     const fitSpread = count > 1 ? Math.floor((available - cardW) / (count - 1)) : 0;
+    if (this.flat) {
+      const spread = Math.min(cardW + GAP, fitSpread);
+      return {
+        cardW,
+        cardH,
+        hoverLift: GAP,
+        neighborPush: spread < cardW ? Math.round(params.neighborPush * scale) : 0,
+        maxSpread: cardW + GAP,
+        minSpread: spread,
+        spreadWidth: available,
+      };
+    }
     return {
       cardW,
       cardH,

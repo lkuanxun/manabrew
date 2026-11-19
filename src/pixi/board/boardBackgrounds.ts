@@ -49,7 +49,7 @@ export const BOARD_BACKGROUNDS: readonly BoardBackgroundOption[] = [
   { id: "volcanic_stone", label: "Volcanic stone", url: volcanicStone, darken: 0 },
 ];
 
-export const DEFAULT_BOARD_BACKGROUND_ID: BoardBackgroundId = "dark_stone";
+export const DEFAULT_BOARD_BACKGROUND_ID: BoardBackgroundId = "none";
 
 function boardBackgroundOption(id: string | null | undefined): BoardBackgroundOption {
   return (

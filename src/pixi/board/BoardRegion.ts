@@ -34,8 +34,9 @@ import {
   ATTACH_PEEK_Y,
   BATTLEFIELD_LERP,
   BG_ALPHA_DROP,
-  BG_ALPHA_IDLE,
-  FELT_HIT_ALPHA,
+  REGION_FILL_LOCAL_ALPHA,
+  REGION_FILL_OPPONENT_ALPHA,
+  REGION_GAP_PX,
   CARD_RADIUS,
   COMBAT_DIM_ALPHA,
   COMBAT_DIM_TINT_LEVEL,
@@ -1786,13 +1787,23 @@ export class BoardRegion {
 
   private drawBackground(): void {
     const felt = this.feltZone();
+    const canvas = this.host.getTheme().gameTheme.canvas;
     this.backgroundGfx.clear();
-    const alpha = this.dropActive ? BG_ALPHA_DROP : BG_ALPHA_IDLE;
-    this.backgroundGfx.roundRect(felt.x, felt.y, felt.width, felt.height, TABLE_RADIUS);
-    this.backgroundGfx.fill({
-      color: hexToNum(this.host.getTheme().gameTheme.canvas.background),
-      alpha: Math.max(alpha, FELT_HIT_ALPHA),
-    });
+    this.backgroundGfx.roundRect(
+      felt.x + REGION_GAP_PX,
+      felt.y + REGION_GAP_PX,
+      Math.max(1, felt.width - REGION_GAP_PX * 2),
+      Math.max(1, felt.height - REGION_GAP_PX * 2),
+      TABLE_RADIUS,
+    );
+    if (this.dropActive) {
+      this.backgroundGfx.fill({ color: hexToNum(canvas.background), alpha: BG_ALPHA_DROP });
+    } else {
+      this.backgroundGfx.fill({
+        color: hexToNum(this.mirrored ? canvas.shadow : canvas.neutral),
+        alpha: this.mirrored ? REGION_FILL_OPPONENT_ALPHA : REGION_FILL_LOCAL_ALPHA,
+      });
+    }
     this.playmat.layout(this.bandZone(), { dropActive: this.dropActive });
   }
 

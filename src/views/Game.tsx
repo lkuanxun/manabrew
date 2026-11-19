@@ -2608,6 +2608,7 @@ export default function Game({ exitTo }: GameProps = {}) {
           dayTime={gameView.dayTime}
           activePlaneNames={gameView.activePlaneNames}
           step={gameView.step}
+          turn={gameView.turn}
           promptType={promptType}
           currentPrompt={activePrompt}
           boardTargets={boardTargets}

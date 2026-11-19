@@ -2,7 +2,6 @@ import { Point, type Application, type Container } from "pixi.js";
 import { CARD_H } from "@/components/game/game.constants";
 import type { GameCanvasCallbacks, PlayZoneRect } from "../types";
 import type { DragHandler } from "../DragHandler";
-import { HAND_RESERVE_TRIM } from "../constants";
 import {
   OPPONENT_PLAYER_HUD_HEIGHT_PX,
   PLAYER_HUD_HAND_GAP_PX,
@@ -35,6 +34,7 @@ export class DesktopBoardScenePresentation implements BoardScenePresentation {
 
   configureHand(hand: HandController): void {
     hand.setCompact(false);
+    hand.setFlat(true);
   }
 
   hudUsesColumn(fieldWidth: number): boolean {
@@ -101,11 +101,11 @@ export class DesktopBoardScenePresentation implements BoardScenePresentation {
   ): BlockingRect[] {
     const handRect = hand?.getBlockerRect();
     if (!handRect) return [];
-    const bottom = zone ? zone.y + zone.height : handRect.y + handRect.height;
-    const top = bottom - Math.max(0, bottom - handRect.y) * HAND_RESERVE_TRIM;
-    const topLeft = root.toGlobal(this.scratchA.set(handRect.x, top), this.scratchA);
+    const left = zone ? zone.x : handRect.x;
+    const right = zone ? zone.x + zone.width : handRect.x + handRect.width;
+    const topLeft = root.toGlobal(this.scratchA.set(left, handRect.y), this.scratchA);
     const bottomRight = root.toGlobal(
-      this.scratchB.set(handRect.x + handRect.width, handRect.y + handRect.height),
+      this.scratchB.set(right, handRect.y + handRect.height),
       this.scratchB,
     );
     return [
@@ -119,7 +119,7 @@ export class DesktopBoardScenePresentation implements BoardScenePresentation {
   }
 
   localHandReserve(handReserveBottom: number): number {
-    return handReserveBottom * HAND_RESERVE_TRIM;
+    return handReserveBottom;
   }
 
   setHandExclusion(dragHandler: DragHandler, rect: BlockingRect | null, _peek: boolean): void {

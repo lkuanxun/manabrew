@@ -21,8 +21,17 @@ export type InGameCardPreviewSize = "small" | "medium" | "large";
 export type InlineCardStyle = "printed" | "rules";
 export type OpponentHandFanMode = "always" | "revealed" | "never";
 
+const PLAIN_BOARD_DEFAULTS = {
+  battlefieldCardStyle: "realistic",
+  boardBackgroundId: "none",
+  tableBackground: "none",
+  inGameAnimations: false,
+  turnBanner: false,
+  opponentLayout: "overview",
+} as const;
+
 const CARD_VIEW_DEFAULTS = {
-  battlefieldCardStyle: "art",
+  battlefieldCardStyle: "realistic",
   inGameCardPreviewStyle: "rules",
   handCardStyle: "rules",
   stackCardStyle: "rules",
@@ -380,7 +389,7 @@ export const usePreferencesStore = create<PreferencesState>()(
           boardBackgroundId: DEFAULT_BOARD_BACKGROUND_ID,
           setBoardBackgroundId: (boardBackgroundId) => set({ boardBackgroundId }),
 
-          inGameAnimations: true,
+          inGameAnimations: false,
           setInGameAnimations: (inGameAnimations) => set({ inGameAnimations }),
           preloadCardImages: true,
           setPreloadCardImages: (preloadCardImages) => set({ preloadCardImages }),
@@ -404,7 +413,7 @@ export const usePreferencesStore = create<PreferencesState>()(
           cardPreviewMode: "hover",
           setCardPreviewMode: (cardPreviewMode) => set({ cardPreviewMode }),
 
-          opponentLayout: "focused",
+          opponentLayout: "overview",
           setOpponentLayout: (opponentLayout) => set({ opponentLayout }),
 
           opponentHandFan: "revealed",
@@ -413,7 +422,7 @@ export const usePreferencesStore = create<PreferencesState>()(
           phaseStopLayout: "compact",
           setPhaseStopLayout: (phaseStopLayout) => set({ phaseStopLayout }),
 
-          turnBanner: true,
+          turnBanner: false,
           setTurnBanner: (turnBanner) => set({ turnBanner }),
 
           hapticFeedback: true,
@@ -478,12 +487,13 @@ export const usePreferencesStore = create<PreferencesState>()(
       },
       {
         name: STORAGE_KEYS.PREFERENCES,
-        version: 6,
+        version: 7,
         migrate: (persistedState, version) => {
           if (!persistedState || typeof persistedState !== "object") return {};
           let persisted = persistedState as Record<string, unknown>;
           if (version < 4) persisted = { ...persisted, ...CARD_VIEW_DEFAULTS };
           if (version < 6) persisted = { ...persisted, aiController: "forge" };
+          if (version < 7) persisted = { ...persisted, ...PLAIN_BOARD_DEFAULTS };
           return pickPersistedPreferences(persisted);
         },
         merge: (persistedState, currentState) => ({

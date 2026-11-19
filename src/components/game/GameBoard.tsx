@@ -25,6 +25,9 @@ import { PlayerSheetModal } from "@/components/game/panels/PlayerSheetModal";
 import { CardInspectModal } from "@/components/game/modals/CardInspectModal";
 import { GlobalStateRail } from "@/components/game/panels/GlobalStateRail";
 import { DesktopGameScene } from "@/components/game/DesktopGameScene";
+import { GameSidebar } from "@/components/game/panels/GameSidebar";
+import { PhaseBar } from "@/components/game/panels/PhaseBar";
+import { RegionHeaders, RegionOutlines } from "@/components/game/panels/RegionHeaders";
 import { MobileGameScene } from "@/components/game/MobileGameScene";
 import type { ZoneTileSpec } from "@/pixi/board/BoardZoneTiles";
 import { usePreferencesStore } from "@/stores/usePreferencesStore";
@@ -40,6 +43,7 @@ import { OPPONENT_SEATS } from "@/components/game/game.types";
 import { useTheme } from "@/hooks/useTheme";
 import {
   botAvatarUrl,
+  gameRound,
   isBotSeat,
   manaAbilityInfos,
   relayAvatarUrl,
@@ -123,6 +127,7 @@ interface GameBoardProps {
   pendingActivePlayerId: string | null;
   priorityPlayerId: string;
   step: StepKind;
+  turn: number;
   promptType?: PromptType;
   currentPrompt: Prompt | null;
   boardTargets: BoardTargetBuckets | null;
@@ -250,6 +255,7 @@ export function GameBoard({
   pendingActivePlayerId,
   priorityPlayerId,
   step,
+  turn,
   promptType,
   currentPrompt,
   boardTargets,
@@ -1809,6 +1815,31 @@ export function GameBoard({
     onTogglePreviewView,
     onLongPressCard,
   };
+  const sidebarPlayers = [...opponents, me].flatMap((player) => {
+    const hud = playerBarSpecs.find((spec) => spec.playerId === player.id);
+    return hud
+      ? [
+          {
+            hud,
+            handCount: player.handCount,
+            libraryCount: player.libraryCount,
+            poison: player.poison ?? 0,
+            zones: zoneTilesByPlayer[player.id] ?? [],
+          },
+        ]
+      : [];
+  });
+  const sidebar = (
+    <GameSidebar
+      players={sidebarPlayers}
+      targetColor={hostileTargeting ? gameTheme.targeting.hostile : gameTheme.targeting.friendly}
+      onSelectPlayer={(playerId) => {
+        if (playerIsTargetable(playerId)) onTargetPlayer(playerId);
+        else setSheetPlayerId(playerId);
+      }}
+      onHoverCards={onHoverZoneCards}
+    />
+  );
   const phaseStops = {
     currentStep: step,
     selfStops,
@@ -1939,7 +1970,20 @@ export function GameBoard({
       ) : (
         <DesktopGameScene
           battlefieldContainerRef={battlefieldContainerRef}
-          board={boardSceneProps}
+          sidebar={sidebar}
+          regionHeaders={<RegionHeaders layout={unifiedLayout} players={sidebarPlayers} />}
+          regionOutlines={
+            <RegionOutlines layout={unifiedLayout} localPlayerId={me.id} players={sidebarPlayers} />
+          }
+          phaseBar={
+            <PhaseBar
+              players={sidebarPlayers.map((player) => player.hud)}
+              turnOrder={[me.id, ...opponents.map((opponent) => opponent.id)]}
+              round={gameRound(turn, opponents.length + 1)}
+              step={step}
+            />
+          }
+          board={{ ...boardSceneProps, showPlayerBars: false, zoneTiles: {} }}
           overlay={{ ...overlaySceneProps, promptSpec: promptOverlaySpec ?? null }}
         />
       )}

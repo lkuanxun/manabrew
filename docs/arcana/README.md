@@ -96,4 +96,4 @@ Tailscale Serve 只開放 443、8443、10000 三個 HTTPS 埠，443 由 Arcana �
 - Duel Commander：關閉指揮官傷害判負，不允許備牌。
 - Hub：新增 Arcana 登入（`auth/arcana.rs`，資料表另有版本序列，見 `docs/agents/HUB.md`）。
 - 前端：登入對話框的 Arcana 按鈕。
-- 介面精簡：關閉 Deck Hub（Community）；導覽列只留 Singleplayer、Multiplayer、My Decks、Collection；首頁拿掉 Card Search、Life Tracker、My Collection 入口和上游的 Discord、GitHub 連結；隱藏 Limited。頁面仍可用網址開啟。牌組編輯器的 Deck Analysis 拿掉 Tokens、Collection、Budget、Replacements 和 Bracket，狀態選單也拿掉 Collection 與 Budget。
+- 介面精簡：關閉 Deck Hub（Community）；導覽列只留 Singleplayer、Multiplayer、My Decks、Collection；首頁拿掉 Card Search、Life Tracker、My Collection 入口和上游的 Discord、GitHub 連結；隱藏 Limited。頁面仍可用網址開啟。牌組編輯器的 Deck Analysis 拿掉 Tokens、Collection、Budget、Replacements 和 Bracket，狀態選單也拿掉 Collection 與 Budget。對戰畫面預設改為樸素版面：無背景圖、對手用 Overview 排版、戰場卡片用 Realistic 牌面，動畫和回合橫幅關閉；偏好設定版本 7 會把這些套到既有使用者一次，之後仍可在遊戲設定裡改回。
