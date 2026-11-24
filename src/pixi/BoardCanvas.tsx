@@ -177,7 +177,6 @@ export function BoardCanvasSurface({
   const layoutPolicyRef = useRef(layoutPolicy);
 
   const cardSizeMultiplier = usePreferencesStore((s) => s.cardSizeMultiplier);
-  const cardStyle = usePreferencesStore((s) => s.battlefieldCardStyle);
   const lockZoneTiles = usePreferencesStore((s) => s.lockZoneTiles);
   const handViewportScale = useHandScale();
   const promptType = useGameStore((s) => s.currentPrompt?.input.type);
@@ -549,10 +548,6 @@ export function BoardCanvasSurface({
   useEffect(() => {
     scene?.setAutoSort(autoSort ?? false);
   }, [scene, autoSort]);
-
-  useEffect(() => {
-    scene?.setCardStyle(cardStyle);
-  }, [scene, cardStyle]);
 
   useEffect(() => {
     scene?.setZoneTilesLocked(lockZoneTiles);

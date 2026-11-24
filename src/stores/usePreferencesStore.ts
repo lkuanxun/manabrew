@@ -15,14 +15,12 @@ import type { ThemeMode } from "@/themes/themeDocument";
 
 export type ZonePanelItem = "library" | "graveyard" | "exile";
 export type CardPreviewMode = "hover" | "right-click";
-export type BattlefieldCardStyle = "realistic" | "art" | "frame";
 export type InGameCardPreviewStyle = "printed" | "rules";
 export type InGameCardPreviewSize = "small" | "medium" | "large";
 export type InlineCardStyle = "printed" | "rules";
 export type OpponentHandFanMode = "always" | "revealed" | "never";
 
 const PLAIN_BOARD_DEFAULTS = {
-  battlefieldCardStyle: "realistic",
   boardBackgroundId: "none",
   tableBackground: "none",
   inGameAnimations: false,
@@ -31,7 +29,6 @@ const PLAIN_BOARD_DEFAULTS = {
 } as const;
 
 const CARD_VIEW_DEFAULTS = {
-  battlefieldCardStyle: "realistic",
   inGameCardPreviewStyle: "rules",
   handCardStyle: "rules",
   stackCardStyle: "rules",
@@ -119,11 +116,6 @@ export interface PreferencesState {
   // accidentally reposition them; tap-to-open keeps working.
   lockZoneTiles: boolean;
   setLockZoneTiles: (value: boolean) => void;
-
-  // Only the Pixi battlefield reads this; hand, stack, and modals always use
-  // the image.
-  battlefieldCardStyle: BattlefieldCardStyle;
-  setBattlefieldCardStyle: (style: BattlefieldCardStyle) => void;
 
   boardBackgroundId: BoardBackgroundId;
   setBoardBackgroundId: (id: BoardBackgroundId) => void;
@@ -222,7 +214,6 @@ const PERSISTED_PREFERENCE_KEYS = [
   "turnBanner",
   "cardSizeMultiplier",
   "lockZoneTiles",
-  "battlefieldCardStyle",
   "boardBackgroundId",
   "inGameAnimations",
   "mobileHandedness",
@@ -384,8 +375,6 @@ export const usePreferencesStore = create<PreferencesState>()(
           lockZoneTiles: false,
           setLockZoneTiles: (lockZoneTiles) => set({ lockZoneTiles }),
 
-          setBattlefieldCardStyle: (battlefieldCardStyle) => set({ battlefieldCardStyle }),
-
           boardBackgroundId: DEFAULT_BOARD_BACKGROUND_ID,
           setBoardBackgroundId: (boardBackgroundId) => set({ boardBackgroundId }),
 
@@ -487,7 +476,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       },
       {
         name: STORAGE_KEYS.PREFERENCES,
-        version: 7,
+        version: 8,
         migrate: (persistedState, version) => {
           if (!persistedState || typeof persistedState !== "object") return {};
           let persisted = persistedState as Record<string, unknown>;

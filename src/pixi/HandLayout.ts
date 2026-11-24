@@ -1,14 +1,13 @@
-const ARC_RADIUS = 900;
-const MAX_ARC_DEG = 30;
+import { HAND_FAN, handFanSlots } from "@/cardDisplay";
 
-export const HOVER_SCALE = 1.8;
+export const HOVER_SCALE = HAND_FAN.hoverScale;
 
 export const HAND_FAN_PARAMS = {
-  hoverLift: 70,
-  neighborPush: 78,
+  hoverLift: HAND_FAN.hoverLiftPx,
+  neighborPush: 0,
   maxSpread: 90,
   minSpread: 38,
-  spreadWidth: 900,
+  spreadWidth: 1800,
 } as const;
 export const COMPACT_HAND_FAN_PARAMS = {
   hoverLift: 82,
@@ -41,6 +40,7 @@ export function computeBaseLayout(
   arc = true,
 ): BaseCardLayout[] {
   if (count === 0) return [];
+  if (arc) return handFanSlots(count, cardW, spreadWidth);
   if (count === 1) return [{ x: 0, drop: 0, rot: 0 }];
 
   const spread = Math.max(
@@ -48,15 +48,11 @@ export function computeBaseLayout(
     Math.min(maxSpread, Math.floor((spreadWidth - cardW) / (count - 1))),
   );
   const totalWidth = (count - 1) * spread;
-  const arcDeg = arc ? Math.min(MAX_ARC_DEG, count * 2.5) : 0;
-
-  return Array.from({ length: count }, (_, i) => {
-    const t = (i / (count - 1)) * 2 - 1;
-    const x = -totalWidth / 2 + i * spread;
-    const rot = t * (arcDeg / 2);
-    const drop = arc ? (1 - Math.cos((t * Math.PI) / 2)) * (ARC_RADIUS * 0.015) : 0;
-    return { x, drop, rot };
-  });
+  return Array.from({ length: count }, (_, i) => ({
+    x: -totalWidth / 2 + i * spread,
+    drop: 0,
+    rot: 0,
+  }));
 }
 
 export function computeHandLayout(

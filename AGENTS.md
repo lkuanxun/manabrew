@@ -54,19 +54,20 @@ The project is large; every line is a long-term liability. Before adding code:
 
 Sub-AGENTS.md files are not auto-discovered by Codex or by Claude Code's parent-directory scan. **Consult this table at the start of any task** and read every file whose scope your change touches.
 
-| File                                                               | Read it before                                                                   |
-| ------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| `src/AGENTS.md`                                                    | Any change under `src/`                                                          |
-| `src/components/game/AGENTS.md`                                    | Any change under `src/components/game/` (game board, modals, panels, zones)      |
-| `src/components/companion/AGENTS.md`                               | Any change under `src/components/companion/` (paper-play life tracker)           |
-| `src-tauri/AGENTS.md`                                              | Any change under `src-tauri/`                                                    |
-| `manabrew-rs/AGENTS.md`                                            | Any Rust engine work — workspace map and engine module map                       |
-| `manabrew-rs/crates/manabrew-engine/src/ability/effects/AGENTS.md` | Adding or modifying a `*_effect.rs` (most parity work)                           |
-| `manabrew-rs/crates/parity/AGENTS.md`                              | Investigating a parity divergence or editing `regression.json`                   |
-| `forge-harness/src/main/java/forge/harness/AGENTS.md`              | Any change under `forge-harness/` (parity/host/common package boundaries)        |
-| `packages/forge-wasm/AGENTS.md`                                    | Any Forge WASM package runtime or decision journal change                        |
-| `scripts/AGENTS.md`                                                | Adding or running a build/parity script                                          |
-| `website/AGENTS.md`                                                | Any change under `website/` (landing at manabrew.app, docs at docs.manabrew.app) |
+| File                                                               | Read it before                                                                              |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `src/AGENTS.md`                                                    | Any change under `src/`                                                                     |
+| `src/components/game/AGENTS.md`                                    | Any change under `src/components/game/` (game board, modals, panels, zones)                 |
+| `src/components/companion/AGENTS.md`                               | Any change under `src/components/companion/` (paper-play life tracker)                      |
+| `src/cardDisplay/AGENTS.md`                                        | Any change to battlefield card presentation (art crop, P/T box, tapped, summoning sickness) |
+| `src-tauri/AGENTS.md`                                              | Any change under `src-tauri/`                                                               |
+| `manabrew-rs/AGENTS.md`                                            | Any Rust engine work — workspace map and engine module map                                  |
+| `manabrew-rs/crates/manabrew-engine/src/ability/effects/AGENTS.md` | Adding or modifying a `*_effect.rs` (most parity work)                                      |
+| `manabrew-rs/crates/parity/AGENTS.md`                              | Investigating a parity divergence or editing `regression.json`                              |
+| `forge-harness/src/main/java/forge/harness/AGENTS.md`              | Any change under `forge-harness/` (parity/host/common package boundaries)                   |
+| `packages/forge-wasm/AGENTS.md`                                    | Any Forge WASM package runtime or decision journal change                                   |
+| `scripts/AGENTS.md`                                                | Adding or running a build/parity script                                                     |
+| `website/AGENTS.md`                                                | Any change under `website/` (landing at manabrew.app, docs at docs.manabrew.app)            |
 
 Topic spinoffs (cross-cut multiple folders):
 

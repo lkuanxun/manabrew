@@ -1,3 +1,4 @@
+import { HAND_FAN } from "@/cardDisplay/cardDisplay.constants";
 import { CARD_GAP } from "@/components/game/game.constants";
 
 export { CARD_RADIUS } from "@/components/game/game.constants";
@@ -90,7 +91,7 @@ export const COMBAT_STAGE_PADDING_PX = 2;
 export const COMBAT_ROW_PAD_Y = 4;
 export const FIELD_INNER_EDGE_PAD_PX = 8;
 export const HAND_RESERVE_TRIM = 0.85;
-export const HAND_BOTTOM_SINK_FRAC = 0.45;
+export const HAND_BOTTOM_SINK_FRAC = HAND_FAN.restingSinkFrac;
 export const HAND_BOTTOM_SINK_FRAC_COMPACT = 0.68;
 export const HAND_BOTTOM_SINK_FRAC_SHEET = 0.43;
 export const HAND_BOTTOM_SINK_FRAC_PEEK = 0.08;

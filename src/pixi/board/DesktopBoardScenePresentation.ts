@@ -1,5 +1,5 @@
 import { Point, type Application, type Container } from "pixi.js";
-import { CARD_H } from "@/components/game/game.constants";
+import { battlefieldCardHeight } from "../CardSprite";
 import type { GameCanvasCallbacks, PlayZoneRect } from "../types";
 import type { DragHandler } from "../DragHandler";
 import {
@@ -24,7 +24,9 @@ export class DesktopBoardScenePresentation implements BoardScenePresentation {
   readonly selfHudHeight = SELF_PLAYER_HUD_HEIGHT_PX;
   readonly hudMaxWidth = PLAYER_PANEL_WIDTH;
   readonly hudMinWidth = SELF_PLAYER_HUD_MIN_WIDTH_PX;
-  readonly cardHeight = CARD_H;
+  get cardHeight(): number {
+    return battlefieldCardHeight();
+  }
   readonly showsOpponentHands = true;
   readonly edgeAnchoredPlayerBars = true;
 
@@ -34,7 +36,7 @@ export class DesktopBoardScenePresentation implements BoardScenePresentation {
 
   configureHand(hand: HandController): void {
     hand.setCompact(false);
-    hand.setFlat(true);
+    hand.setFlat(false);
   }
 
   hudUsesColumn(fieldWidth: number): boolean {

@@ -4,8 +4,8 @@ import { listen } from "@tauri-apps/api/event";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
-  ALL_BATTLEFIELD_STYLES,
   ALL_CARDS_ESTIMATE,
+  BOARD_ART_VARIANTS,
   cacheCardRecords,
   cancelCardArtDownload,
   cardArtCacheAvailable,
@@ -17,12 +17,10 @@ import {
   downloadAllCardArt,
   estimateBytes,
   preseedCardArt,
-  variantsForStyles,
   type BulkProgress,
   type CardArtCacheStats,
 } from "@/api/cardArtCache";
 import { useOwnedDecks } from "@/hooks/useOwnedDecks";
-import { usePreferencesStore } from "@/stores/usePreferencesStore";
 import { useScryfallStore } from "@/stores/useScryfallStore";
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -37,14 +35,11 @@ function formatBytes(bytes: number): string {
 }
 export function CardArtDownloadSection() {
   const decks = useOwnedDecks();
-  const style = usePreferencesStore((state) => state.battlefieldCardStyle);
   const [stats, setStats] = useState<CardArtCacheStats | null>(null);
   const [cards, setCards] = useState(0);
-  const [everyStyle, setEveryStyle] = useState(false);
   const [busy, setBusy] = useState<"decks" | "all" | "clearing" | null>(null);
   const [progress, setProgress] = useState<BulkProgress | null>(null);
   const [available, setAvailable] = useState(false);
-  const variants = variantsForStyles(everyStyle ? ALL_BATTLEFIELD_STYLES : [style]);
   const refresh = useCallback(() => {
     cardArtCacheStats()
       .then(setStats)
@@ -79,7 +74,9 @@ export function CardArtDownloadSection() {
   async function downloadDecks() {
     setBusy("decks");
     try {
-      const urls = [...new Set(decks.flatMap((saved) => deckArtUrls(saved.deck, variants)))];
+      const urls = [
+        ...new Set(decks.flatMap((saved) => deckArtUrls(saved.deck, BOARD_ART_VARIANTS))),
+      ];
       if (urls.length === 0) {
         toast.info(`No decks to download art for yet.`);
         return;
@@ -103,7 +100,7 @@ export function CardArtDownloadSection() {
     setBusy("all");
     setProgress(null);
     try {
-      const result = await downloadAllCardArt(variants);
+      const result = await downloadAllCardArt(BOARD_ART_VARIANTS);
       const summary = `Downloaded ${result.fetched}, already had ${result.alreadyCached}`;
       toast.success(result.failed > 0 ? `${summary}, ${result.failed} failed` : summary);
       refresh();
@@ -136,18 +133,6 @@ export function CardArtDownloadSection() {
         picture to draw — pictures alone are not enough. Every card additionally keeps every card
         name, the set list and every ruling, so searching and pasting a decklist work offline too.
       </p>
-      <p className="text-ui-body text-muted-foreground">
-        Downloading for the <strong>{style}</strong> battlefield style. That style draws{""}
-        {variants.join(",")}, so art downloaded for one style does not cover another.
-      </p>
-      <label className="flex items-center gap-2 text-ui-label text-muted-foreground touch:min-h-11 touch:min-w-11">
-        <input
-          type="checkbox"
-          checked={everyStyle}
-          onChange={(event) => setEveryStyle(event.target.checked)}
-        />
-        Cover every battlefield style (larger download)
-      </label>
       <p className="text-ui-meta text-muted-foreground">
         {stats
           ? `On disk: ${stats.files} image${stats.files === 1 ? "" : "s"}, ${formatBytes(stats.bytes)} — ${stats.pinnedFiles} of them downloaded on purpose (${formatBytes(stats.pinnedBytes)}).`
@@ -167,7 +152,7 @@ export function CardArtDownloadSection() {
         <Button variant="primary" onClick={() => void downloadDecks()} disabled={busy !== null}>
           {busy === "decks"
             ? `Downloading\u2026`
-            : `My decks (${decks.length}) · ~${formatBytes(estimateBytes(variants, deckCards.size))}`}
+            : `My decks (${decks.length}) · ~${formatBytes(estimateBytes(BOARD_ART_VARIANTS, deckCards.size))}`}
         </Button>
         {busy === "all" ? (
           <Button variant="outline" onClick={() => void cancelCardArtDownload()}>
@@ -179,7 +164,7 @@ export function CardArtDownloadSection() {
             onClick={() => void downloadEverything()}
             disabled={busy !== null}
           >
-            {`Every card · ~${formatBytes(estimateBytes(variants, ALL_CARDS_ESTIMATE))}`}
+            {`Every card · ~${formatBytes(estimateBytes(BOARD_ART_VARIANTS, ALL_CARDS_ESTIMATE))}`}
           </Button>
         )}
         <Button variant="outline" onClick={() => void clear(false)} disabled={busy !== null}>

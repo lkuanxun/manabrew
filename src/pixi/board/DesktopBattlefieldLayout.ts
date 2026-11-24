@@ -1,6 +1,9 @@
 import { HAND_CARD_BASE } from "@/components/game/game.styles";
-import { FIELD_INNER_EDGE_PAD_PX, GAP } from "../constants";
+import { FIELD_INNER_EDGE_PAD_PX } from "../constants";
 import { battlefieldScaleForMultiplier, scaleForRowsWithCombatRow } from "../GridLayout";
+import { CARD_W } from "@/components/game/game.constants";
+import { artCropTargetWidth, handCardTargetWidth } from "@/cardDisplay";
+import { battlefieldCardHeight } from "../CardSprite";
 import { computeBoardLayout } from "./boardLayout";
 import { playmatGridArea } from "./PlaymatLayer";
 import type { BattlefieldLayoutPolicy, BattlefieldLayoutResult } from "./battlefieldLayoutPolicy";
@@ -35,9 +38,19 @@ export const DESKTOP_BATTLEFIELD_LAYOUT: BattlefieldLayoutPolicy = {
       0,
     );
     const selfFromSeam = selfGrid.y + selfGrid.height - layout.self.y;
-    const selfScale = Math.max(
+    const fitScale = Math.max(
       Number.EPSILON,
-      battlefieldScaleForMultiplier(selfGrid.height, selfFromSeam, input.cardSizeMultiplier),
+      battlefieldScaleForMultiplier(
+        selfGrid.height,
+        selfFromSeam,
+        input.cardSizeMultiplier,
+        battlefieldCardHeight(),
+      ),
+    );
+    const selfScale = Math.min(
+      fitScale,
+      (artCropTargetWidth(window.innerWidth, window.innerHeight) * input.cardSizeMultiplier) /
+        CARD_W,
     );
     const opponentUsables = layout.opponents.map((opponent) =>
       playmatTrim(Math.max(1, opponent.rect.height)),
@@ -47,13 +60,20 @@ export const DESKTOP_BATTLEFIELD_LAYOUT: BattlefieldLayoutPolicy = {
       layout.opponentLayout === "overview"
         ? Math.max(
             Number.EPSILON,
-            Math.min(selfScale, scaleForRowsWithCombatRow(opponentUsable, OVERVIEW_OPPONENT_ROWS)),
+            Math.min(
+              selfScale,
+              scaleForRowsWithCombatRow(
+                opponentUsable,
+                OVERVIEW_OPPONENT_ROWS,
+                battlefieldCardHeight(),
+              ),
+            ),
           )
         : selfScale;
     return {
       layout,
       scales: { self: selfScale, opponent: opponentScale },
-      handScale: Math.max(Number.EPSILON, (handReserve - GAP * 2) / HAND_CARD_BASE.cardH),
+      handScale: handCardTargetWidth(window.innerWidth, window.innerHeight) / HAND_CARD_BASE.cardW,
       selfClusterMaxHeight: Math.max(input.observedHandReserve, handReserve),
     };
   },

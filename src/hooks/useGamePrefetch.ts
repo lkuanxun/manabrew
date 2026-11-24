@@ -8,7 +8,6 @@ import { renderCard } from "@/lib/cardRenderer";
 import { releaseCardRaster } from "@/lib/cardRenderTypes";
 import { libraryTopRendered, manabrewRenderVariants, warmDeckFaces } from "@/lib/cardFaceWarmup";
 import { isForgeWasmActive } from "@/lib/forgeWasm";
-import { usePreferencesStore } from "@/stores/usePreferencesStore";
 import { gameCardFaceIndex } from "@/lib/gameCard";
 
 export type GamePrefetchMode = "visible" | "full";
@@ -139,8 +138,7 @@ export function useGamePrefetch(mode: GamePrefetchMode): void {
     let cancelIdle = () => {};
     const deckCards = Object.values(decks).flatMap(getDeckCardPool);
     const visibleCards = cardsToPrefetchImmediately(gameView, decks);
-    const waitForDeck =
-      mode === "full" && usePreferencesStore.getState().battlefieldCardStyle !== "frame";
+    const waitForDeck = mode === "full";
     const ready = Promise.all([
       prefetchCards(visibleCards).then(renderOpeningCards),
       waitForDeck ? prefetchAllCards(visibleCards, deckCards) : undefined,

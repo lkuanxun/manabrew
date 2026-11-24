@@ -575,15 +575,15 @@ export class HandController {
     if (count === 0) return null;
 
     const dims = this.getDimensions();
-    const spread =
-      count <= 1
-        ? 0
-        : Math.max(
-            dims.minSpread,
-            Math.min(dims.maxSpread, Math.floor((dims.spreadWidth - dims.cardW) / (count - 1))),
-          );
-    const totalSpread = count <= 1 ? 0 : (count - 1) * spread;
-    const handW = totalSpread + dims.cardW;
+    const slots = computeBaseLayout(
+      count,
+      dims.cardW,
+      dims.maxSpread,
+      dims.minSpread,
+      dims.spreadWidth,
+      !this.flat,
+    );
+    const handW = slots[slots.length - 1]!.x - slots[0]!.x + dims.cardW;
     const handH = dims.cardH;
     const zone = this.host.getPlayZone();
 

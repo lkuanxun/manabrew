@@ -5,10 +5,9 @@ import { destroyPixiApp, installPixiPatches } from "@/pixi/pixiPatches";
 installPixiPatches();
 
 import { useCard, useScryfallStore } from "@/stores/useScryfallStore";
-import { usePreferencesStore } from "@/stores/usePreferencesStore";
 import { scryfallToSampleGameCard } from "@/lib/sampleGameCard";
 import { asDeckCard } from "@/lib/decks";
-import { CardSprite, setCardSpriteStyle, setCardSpriteTheme } from "@/pixi/CardSprite";
+import { CardSprite, setCardSpriteTheme } from "@/pixi/CardSprite";
 import { CARD_W, CARD_H } from "@/components/game/game.constants";
 import { safeDestroy } from "@/pixi/board/pixiHelpers";
 import { useTheme } from "@/hooks/useTheme";
@@ -50,7 +49,6 @@ export function usePlaymatPreview({
   showSampleCards,
 }: PlaymatPreviewArgs) {
   const theme = useTheme();
-  const cardStyle = usePreferencesStore((state) => state.battlefieldCardStyle);
   const { aspect, feltWidth } = useBattlefieldMetrics();
   const previewRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -205,7 +203,6 @@ export function usePlaymatPreview({
     const app = appRef.current;
     if (!ready || !app) return;
     setCardSpriteTheme(theme);
-    setCardSpriteStyle(cardStyle);
     if (previewCards.length === 0 || !showSampleCards) {
       requestRenderRef.current();
       return;
@@ -232,11 +229,7 @@ export function usePlaymatPreview({
     for (const card of previewCards) {
       void useScryfallStore
         .getState()
-        .getCardTexture(
-          asDeckCard(undefined, card),
-          cardStyle === "realistic" ? "full" : "art",
-          gameCardFaceIndex(card),
-        )
+        .getCardTexture(asDeckCard(undefined, card), "art", gameCardFaceIndex(card))
         .then(
           () => {
             if (active) requestRenderRef.current();
@@ -262,7 +255,7 @@ export function usePlaymatPreview({
       for (const sprite of sprites) safeDestroy(sprite);
       requestRenderRef.current();
     };
-  }, [ready, previewCards, previewWidth, previewHeight, showSampleCards, theme, cardStyle]);
+  }, [ready, previewCards, previewWidth, previewHeight, showSampleCards, theme]);
 
   gestureRef.current = {
     fit: settings.fit,

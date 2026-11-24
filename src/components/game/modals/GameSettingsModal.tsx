@@ -11,7 +11,6 @@ import {
   HOVER_DELAY_MIN,
   HOVER_DELAY_STEP,
 } from "@/components/game/game.constants";
-import { BATTLEFIELD_CARD_STYLE_OPTIONS } from "@/components/game/battlefieldCardStyles";
 import {
   INLINE_CARD_STYLE_OPTIONS,
   IN_GAME_CARD_PREVIEW_STYLE_OPTIONS,
@@ -170,13 +169,6 @@ export function GameSettingsModal({ onClose }: { onClose: () => void }) {
               className="w-full min-h-8 touch:min-h-11 accent-primary"
             />
           </div>
-          <Choice
-            label="Battlefield card style"
-            value={prefs.battlefieldCardStyle}
-            options={BATTLEFIELD_CARD_STYLE_OPTIONS}
-            onChange={prefs.setBattlefieldCardStyle}
-            hint="Applies to battlefield cards. Hand, stack and dialog view settings are independent."
-          />
           <Choice
             label="Battlefield arrangement"
             value={prefs.battlefieldAutoSort}

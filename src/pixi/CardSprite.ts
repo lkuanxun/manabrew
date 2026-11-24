@@ -29,6 +29,14 @@ import { gameCardFaceIndex } from "@/lib/gameCard";
 import type { Theme } from "@/hooks/useTheme";
 import { cardFrameTintHex, readableTextColor, withAlpha } from "@/themes/gameTheme";
 import { getTheme } from "@/hooks/useTheme";
+import {
+  ART_CROP_ASPECT,
+  ArtCropChrome,
+  artCropFrameColors,
+  ptDisplay,
+  ptTone,
+  SummoningSicknessRipple,
+} from "@/cardDisplay";
 import { hexToNum } from "./colorUtils";
 import { DOOMED_FILL_ALPHA } from "./constants";
 import { PulseRing } from "./effects/PulseRing";
@@ -37,17 +45,12 @@ import { CardLiveHighlight } from "./effects/CardLiveHighlight";
 import { peekCard, useScryfallStore } from "@/stores/useScryfallStore";
 import { isEtchedOnlyPrinting } from "@/lib/cardFinish";
 import { useGameStore } from "@/stores/useGameStore";
-import { usePreferencesStore, type BattlefieldCardStyle } from "@/stores/usePreferencesStore";
 import { battlefieldKeywords } from "@/lib/battlefieldKeywords";
 import { applyManaSymbol, parseManaCost } from "./manaSymbols";
 import { asGameDeckCard } from "@/lib/decks";
-import { cardRenderInputKey, renderCard } from "@/lib/cardRenderer";
-import {
-  releaseCardRaster,
-  selectCardRenderTier,
-  type CardRenderTier,
-} from "@/lib/cardRenderTypes";
-import { createGeneratedCardTexture, getGeneratedCardArtWindows } from "./generatedCardTexture";
+import { cardRenderInputKey } from "@/lib/cardRenderer";
+import { selectCardRenderTier, type CardRenderTier } from "@/lib/cardRenderTypes";
+import { getGeneratedCardArtWindows } from "./generatedCardTexture";
 import { writeCardTextureUvs } from "./cardTextureUvs";
 import { loadCardBack } from "./cardBackTexture";
 import { DEBUG_KEYWORD_CARD_ID, useGameDevStore } from "@/stores/useGameDevStore";
@@ -158,9 +161,9 @@ const REALISTIC_ONLY_SETS = new Set(["TRK", "TRC"]);
 export function isRealisticOnlyCard(card: CardDto): boolean {
   return REALISTIC_ONLY_SETS.has(card.identity.setCode.toUpperCase());
 }
-let activeStyle: BattlefieldCardStyle = usePreferencesStore.getState().battlefieldCardStyle;
-export function setCardSpriteStyle(style: BattlefieldCardStyle): void {
-  activeStyle = style;
+type CardSpriteStyle = "artCrop" | "realistic";
+export function battlefieldCardHeight(): number {
+  return CARD_W * ART_CROP_ASPECT;
 }
 let activeHoverDebug = false;
 export function setCardSpriteHoverDebug(on: boolean): void {
@@ -392,24 +395,8 @@ function badgeColor(key: CardStatusKey): number {
 function getCounterColor(type: string): number {
   return hexToNum(activeTheme.gameTheme.counter[counterColorKey(type)]);
 }
-const parseStat = (value: string | null | undefined): number => {
-  if (!value) return 0;
-  const n = parseInt(value, 10);
-  return Number.isNaN(n) ? 0 : n;
-};
-const resolvePTBgColor = (card: CardDto): number => {
-  const pt = activeTheme.gameTheme.pt;
-  const toughness = parseStat(card.toughness);
-  if (card.damage != null && card.damage >= toughness) return hexToNum(pt.lethal);
-  if (card.basePower == null) return hexToNum(pt.neutral);
-  const curP = parseStat(card.power);
-  const curT = toughness;
-  const buffed = curP > card.basePower || curT > (card.baseToughness ?? 0);
-  const debuffed = curP < card.basePower || curT < (card.baseToughness ?? 0);
-  if (buffed) return hexToNum(pt.buffed);
-  if (debuffed) return hexToNum(pt.debuffed);
-  return hexToNum(pt.neutral);
-};
+const resolvePTBgColor = (card: CardDto): number =>
+  hexToNum(activeTheme.gameTheme.pt[ptTone(card)]);
 
 export class CardSprite extends Container {
   private static readonly instances = new Set<CardSprite>();
@@ -495,6 +482,8 @@ export class CardSprite extends Container {
   private readonly liveHighlight: CardLiveHighlight;
   private readonly foilUvs = new Float32Array(8);
   private readonly foilSurface = new Rectangle();
+  private readonly artCrop = new ArtCropChrome();
+  private readonly sickRipple = new SummoningSicknessRipple();
   private ringBearerGfx: Graphics;
   private ringBearerIcon: Sprite;
   private mustAttackGfx: Graphics;
@@ -591,6 +580,8 @@ export class CardSprite extends Container {
       width: 1,
     });
     this.printedFaceContainer.addChild(this.placeholderGfx);
+    this.artCrop.visible = false;
+    this.printedFaceContainer.addChild(this.artCrop.back);
     this.nameText = new Text({ text: card.identity.name, style: NAME_STYLE });
     this.nameText.resolution = TEXT_RASTER_RESOLUTION;
     this.nameText.anchor.set(0.5);
@@ -634,6 +625,7 @@ export class CardSprite extends Container {
     this.hitFlashGfx = new Graphics();
     this.hitFlashGfx.visible = false;
     this.addChild(this.hitFlashGfx);
+    this.addChild(this.sickRipple);
     this.edgeGlowMask = new Graphics();
     this.edgeGlowMask
       .roundRect(0, 0, this.cw, this.ch, CARD_RADIUS)
@@ -644,6 +636,7 @@ export class CardSprite extends Container {
     this.edgeGlowGfx.visible = false;
     this.edgeGlowGfx.mask = this.edgeGlowMask;
     this.addChild(this.edgeGlowGfx);
+    this.addChild(this.artCrop.front);
     this.badgeContainer = new Container();
     this.badgeBg = new Graphics();
     this.badgeText = new Text({ text: "", style: BADGE_STYLE });
@@ -785,8 +778,14 @@ export class CardSprite extends Container {
     return asGameDeckCard(useGameStore.getState().gameDecks, card);
   }
 
-  private cardStyle(card = this.card): BattlefieldCardStyle {
-    return !this.isBattlefield || isRealisticOnlyCard(card) ? "realistic" : activeStyle;
+  private cardStyle(card = this.card): CardSpriteStyle {
+    if (!this.isBattlefield || this.kind !== "battlefield" || isRealisticOnlyCard(card))
+      return "realistic";
+    return "artCrop";
+  }
+
+  private artCropActive(): boolean {
+    return this.cardStyle() === "artCrop" && this.imageIsArtwork && !this.hasHiddenIdentity();
   }
 
   private hasHiddenIdentity(card = this.card): boolean {
@@ -806,7 +805,7 @@ export class CardSprite extends Container {
     return JSON.stringify([
       style,
       tier,
-      style !== "realistic" && style !== "art"
+      style === "artCrop"
         ? cardRenderInputKey({ card, deckCard, faceIndex })
         : [useScryfallStore.getState().locale, deckCard, faceIndex],
     ]);
@@ -841,14 +840,14 @@ export class CardSprite extends Container {
     const tier = this.selectRasterTier(scale);
     if (tier === this.renderTier) return;
     this.renderTier = tier;
-    if (this.cardStyle() === "frame") {
-      void this.loadImage();
-    }
   }
 
   private displayDimensions(): { width: number; height: number } {
     if (this.compactSquare && this.kind === "battlefield") {
       return { width: CARD_W, height: CARD_W };
+    }
+    if (this.artCropFootprint()) {
+      return { width: CARD_W, height: CARD_W * ART_CROP_ASPECT };
     }
     return this.isHorizontal()
       ? { width: CARD_H, height: CARD_W }
@@ -861,7 +860,10 @@ export class CardSprite extends Container {
     return isHorizontalGameCard(this.card, this.deckCard().layout, faceIndex);
   }
   get horizontalFrame(): boolean {
-    return this.cw > this.ch;
+    return !this.artCropFootprint() && this.cw > this.ch;
+  }
+  private artCropFootprint(): boolean {
+    return this.kind === "battlefield" && !this.compactSquare;
   }
   setCompactSquare(active: boolean): void {
     const compactSquare = active && this.kind === "battlefield";
@@ -917,7 +919,7 @@ export class CardSprite extends Container {
     return true;
   }
   private fitImageToSlot(): void {
-    if (this.imageIsArtwork) {
+    if (this.imageIsArtwork || this.artCropFootprint()) {
       this.fitArtCover();
     } else if (this.compactSquare) {
       this.fitPrintedSquare();
@@ -985,43 +987,19 @@ export class CardSprite extends Container {
     const tier = this.selectRasterTier();
     this.renderTier = tier;
     let texture: Texture;
-    let owned = false;
     let artwork = false;
     try {
       if (hidden) {
         texture = await loadCardBack();
-      } else if (custom && style === "art") {
+      } else if (custom) {
         texture = await useScryfallStore.getState().getCardTexture(deckCard!, "art", faceIndex);
         artwork = true;
-      } else if (custom) {
-        const raster = await renderCard({ card, deckCard, faceIndex }, controller.signal, { tier });
-        try {
-          if (this.destroyed || generation !== this.loadGeneration || controller.signal.aborted)
-            return;
-          texture = createGeneratedCardTexture(raster);
-          owned = true;
-        } finally {
-          releaseCardRaster(raster);
-        }
-        if (deckCard?.backFace) {
-          void renderCard(
-            { card, deckCard, faceIndex: faceIndex === 0 ? 1 : 0 },
-            controller.signal,
-            { tier, priority: "background" },
-          ).then(releaseCardRaster, () => undefined);
-        }
       } else {
         texture = await useScryfallStore.getState().getCardTexture(deckCard!, "full", faceIndex);
       }
     } catch (error) {
       if (this.destroyed || generation !== this.loadGeneration) return;
-      console.warn(
-        custom && style !== "art"
-          ? "[pixi] generated card render failed"
-          : "[pixi] card image load failed",
-        card.identity.name,
-        error,
-      );
+      console.warn("[pixi] card image load failed", card.identity.name, error);
       texture = custom
         ? await useScryfallStore
             .getState()
@@ -1029,10 +1007,7 @@ export class CardSprite extends Container {
             .catch(() => Texture.EMPTY)
         : Texture.EMPTY;
     }
-    if (this.destroyed || generation !== this.loadGeneration) {
-      if (owned) texture.destroy(true);
-      return;
-    }
+    if (this.destroyed || generation !== this.loadGeneration) return;
     this._imageSettled = true;
     if (texture === Texture.EMPTY) {
       this.imageSpr.texture = Texture.EMPTY;
@@ -1050,7 +1025,7 @@ export class CardSprite extends Container {
       this.finishPreviewFlip();
       return;
     }
-    this.showImage(texture, owned, artwork);
+    this.showImage(texture, false, artwork);
   }
   private showImage(texture: Texture, owned = false, artwork = false): void {
     const previous = this.ownedImageTexture;
@@ -1361,14 +1336,23 @@ export class CardSprite extends Container {
   private fitArtCover(): void {
     const texture = this.imageSpr.texture;
     if (texture.width === 0 || texture.height === 0) return;
-    const scale = Math.max(this.cw / texture.width, this.ch / texture.height);
+    if (this.artCropActive()) this.artCrop.layout(this.cw, this.ch);
+    const area = this.artCropActive()
+      ? this.artCrop.artRect
+      : { x: 0, y: 0, width: this.cw, height: this.ch };
+    const scale = Math.max(area.width / texture.width, area.height / texture.height);
     this.imageSpr.anchor.set(0.5, 0.5);
     this.imageSpr.rotation = 0;
-    this.imageSpr.position.set(this.cw / 2, this.ch / 2);
+    this.imageSpr.position.set(area.x + area.width / 2, area.y + area.height / 2);
     this.imageSpr.setSize(texture.width * scale, texture.height * scale);
   }
   private usesArtFrame(): boolean {
-    return this.isBattlefield && this.imageIsArtwork && !this.hasHiddenIdentity();
+    return (
+      this.isBattlefield &&
+      this.cardStyle() !== "artCrop" &&
+      this.imageIsArtwork &&
+      !this.hasHiddenIdentity()
+    );
   }
 
   private rebuildDecorations(forceRail: boolean): void {
@@ -1407,7 +1391,6 @@ export class CardSprite extends Container {
       mask.roundRect(0, 0, this.cw, this.ch, CARD_RADIUS).fill(neutral);
     }
     this.rebuildDecorations(true);
-    if (this.cardStyle() === "frame") void this.loadImage();
     this.redrawHoverDebug();
   }
 
@@ -1435,7 +1418,32 @@ export class CardSprite extends Container {
       x += size + gap;
     }
   }
+  private renderArtCrop(): void {
+    const active = this.artCropActive();
+    this.artCrop.visible = active;
+    const mask = active ? this.artCrop.artRect : { x: 0, y: 0, width: this.cw, height: this.ch };
+    if (active) {
+      const theme = activeTheme.gameTheme;
+      this.artCrop.layout(this.cw, this.ch);
+      this.artCrop.draw(
+        {
+          name: this.card.identity.name,
+          frameColors: artCropFrameColors(this.card, theme.mana),
+          pt: ptDisplay(this.card),
+          tapped: !!this.card.tapped,
+        },
+        theme,
+      );
+    }
+    this.imageMask.clear();
+    this.imageMask
+      .roundRect(mask.x, mask.y, mask.width, mask.height, active ? 1.5 : CARD_RADIUS)
+      .fill(hexToNum(activeTheme.gameTheme.canvas.neutral));
+    this.updateEdgeGlow();
+    this.updateCardFilter();
+  }
   private renderFrame(): void {
+    this.renderArtCrop();
     if (!this.usesArtFrame()) {
       this.frameContainer.visible = false;
       this.frameTypeBandH = 0;
@@ -1550,7 +1558,12 @@ export class CardSprite extends Container {
     }
     this.card = card;
     if (imageChanged) this.loadImage(imageKey);
-    if (frameChanged) this.renderFrame();
+    if (
+      frameChanged ||
+      (this.artCropActive() && (statsChanged || card.tapped !== previous.tapped))
+    ) {
+      this.renderFrame();
+    }
     const previousRail = this.railState;
     this.updateRail();
     const railChanged = previousRail !== this.railState;
@@ -1606,10 +1619,13 @@ export class CardSprite extends Container {
   private updateEdgeGlow(): void {
     const card = this.card;
     const attacking = this.isBattlefield && !!card.isAttacking;
-    const sick =
+    const summoningSick =
       this.isBattlefield &&
       !!card.summoningSick &&
       (card.types?.some((t) => t.toLowerCase() === "creature") ?? false);
+    const rippling = summoningSick && this.artCropActive();
+    this.sickRipple.configure(rippling, this.artCrop.artRect, activeTheme.gameTheme);
+    const sick = summoningSick && !rippling;
     this.edgeGlowGfx.clear();
     if (!attacking && !sick) {
       this.edgeGlowGfx.visible = false;
@@ -1651,6 +1667,7 @@ export class CardSprite extends Container {
     this.hitFlashFx = oneShot(now, DAMAGE_HIT.durationMs);
   }
   tickEffects(now: number): void {
+    this.sickRipple.tick(now);
     if (this.glowPulsing) {
       this.edgeGlowGfx.alpha = animationsEnabled()
         ? pulse(now, EDGE_GLOW.pulsePeriodMs, EDGE_GLOW.pulseMin, EDGE_GLOW.pulseMax)
@@ -1735,6 +1752,7 @@ export class CardSprite extends Container {
     const frameNameStyle = this.frameNameText.style;
     const frameTypeStyle = this.frameTypeText.style;
     super.destroy(options);
+    this.artCrop.destroy();
     frameNameStyle.destroy();
     frameTypeStyle.destroy();
   }
@@ -1744,6 +1762,7 @@ export class CardSprite extends Container {
     const card = this.card;
     const sick =
       this.isBattlefield &&
+      !this.artCropActive() &&
       !!card.summoningSick &&
       (card.types?.some((t) => t.toLowerCase() === "creature") ?? false);
     const phased = this.isBattlefield && !!card.phasedOut;
@@ -1936,7 +1955,13 @@ export class CardSprite extends Container {
     const isCreature = card.types?.some((t) => t.toLowerCase() === "creature");
     // Hand cards already carry the printed P/T; drawing our overlay on top would
     // double it at a mismatched size, so the badge is battlefield-only.
-    if (!this.isBattlefield || !isCreature || !card.power || !card.toughness) {
+    if (
+      !this.isBattlefield ||
+      this.artCropActive() ||
+      !isCreature ||
+      !card.power ||
+      !card.toughness
+    ) {
       this.ptContainer.visible = false;
       return;
     }

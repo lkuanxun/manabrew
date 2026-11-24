@@ -3,13 +3,8 @@ import { Application, Container, Graphics, Point, Text, type FederatedPointerEve
 import { isCardPreviewTarget } from "@/lib/cardPreviewEvents";
 import type { CardDto, PlaymatSettings } from "@/protocol/game";
 import type { AttackTargetDto, TargetRef } from "@/protocol/prompts/common";
-import {
-  CardSprite,
-  setCardSpriteTheme,
-  setCardSpriteStyle,
-  setCardSpriteHoverDebug,
-} from "../CardSprite";
-import type { BattlefieldCardStyle, InlineCardStyle } from "@/stores/usePreferencesStore";
+import { CardSprite, setCardSpriteTheme, setCardSpriteHoverDebug } from "../CardSprite";
+import type { InlineCardStyle } from "@/stores/usePreferencesStore";
 import type { HandCardControlsSpec } from "../HandCardControls";
 import type { HandActionOption } from "@/stores/useGameUIStore";
 import { hexToNum, mixNum } from "../colorUtils";
@@ -1273,12 +1268,6 @@ export class BoardScene {
 
   previewEtb(): void {
     for (const rec of this.regions.values()) rec.region.previewEtb();
-  }
-
-  setCardStyle(style: BattlefieldCardStyle): void {
-    if (this.destroyed) return;
-    setCardSpriteStyle(style);
-    for (const rec of this.regions.values()) rec.region.restyleCards();
   }
 
   setHoverDebug(on: boolean): void {

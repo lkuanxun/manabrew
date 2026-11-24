@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useGameDevStore } from "@/stores/useGameDevStore";
 import { BattlefieldKeywordDevControls } from "./BattlefieldKeywordDevControls";
-import { BattlefieldStyleDevControls } from "./BattlefieldStyleDevControls";
 import { DevCardLayoutControls } from "./DevCardLayoutControls";
 import { BoardDevControls } from "./BoardDevControls";
 import { CardBadgeDevControls } from "./CardBadgeDevControls";
@@ -199,7 +198,6 @@ export function GameDevPanel() {
         <div role="tabpanel" className="flex flex-col gap-3">
           {workspace === "card" ? (
             <>
-              <BattlefieldStyleDevControls />
               <BattlefieldKeywordDevControls />
               <DevCardLayoutControls />
               <CardBadgeDevControls />

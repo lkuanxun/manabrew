@@ -52,15 +52,6 @@ export function manabrewRenderVariants(): CardRenderOptions[] {
   const variants: CardRenderOptions[] = [];
   if (usesRulesFaces())
     variants.push({ rulesText: false, standardFrameFallback: true, tier: rulesTiers().hand });
-  if (usePreferencesStore.getState().battlefieldCardStyle === "frame") {
-    variants.push({
-      tier: selectCardRenderTier(
-        GAME_CARD_SIZES.battlefield.width,
-        GAME_CARD_SIZES.battlefield.height,
-        overlayResolution(window.innerWidth, window.innerHeight),
-      ),
-    });
-  }
   return variants;
 }
 

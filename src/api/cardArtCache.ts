@@ -2,26 +2,17 @@ import { getPlatform } from "@/platform";
 import { cacheKeyForImage, localCardArtRouteAvailable } from "@/lib/scryfallImageSource";
 import type { Deck } from "@/protocol";
 import type { ScryfallCard } from "@/types/scryfall";
-import type { BattlefieldCardStyle } from "@/stores/usePreferencesStore";
 
 /**
  * Which Scryfall variant each surface draws. `normal` is every DOM surface
- * (thumbnails, prompts, previews); the Pixi battlefield asks
- * `getCardTexture` for `border_crop` on the realistic style and `art_crop` on
- * the art and frame ones, so a download that skips those leaves the board
- * blank offline no matter how much art is cached.
+ * (thumbnails, prompts, previews); the Pixi board asks `getCardTexture` for
+ * `art_crop` on battlefield cards and `border_crop` on hand and stack cards,
+ * so a download that skips those leaves the board blank offline no matter how
+ * much art is cached.
  */
 export type ArtVariant = "normal" | "border_crop" | "art_crop";
 
-export const ALL_BATTLEFIELD_STYLES: BattlefieldCardStyle[] = ["realistic", "art", "frame"];
-
-export function variantsForStyles(styles: BattlefieldCardStyle[]): ArtVariant[] {
-  const variants = new Set<ArtVariant>(["normal"]);
-  for (const style of styles) {
-    variants.add(style === "realistic" ? "border_crop" : "art_crop");
-  }
-  return [...variants];
-}
+export const BOARD_ART_VARIANTS: ArtVariant[] = ["normal", "border_crop", "art_crop"];
 
 /** Measured over real cards: normal 113KB, border_crop 101KB, art_crop 77KB. */
 const VARIANT_KB: Record<ArtVariant, number> = {

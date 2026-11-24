@@ -1,6 +1,6 @@
-import { CARD_H, CARD_W } from "@/components/game/game.constants";
+import { CARD_W } from "@/components/game/game.constants";
 import type { CardDto } from "@/protocol/game";
-import type { CardSprite } from "../CardSprite";
+import { battlefieldCardHeight, type CardSprite } from "../CardSprite";
 import {
   COMBAT_ROW_PAD_Y,
   GRID_SKELETON_FILL_ALPHA,
@@ -13,7 +13,9 @@ import type { BoardRegionPoint, BoardRegionPresentation } from "./BoardRegionPre
 import type { BlockingRect } from "./types";
 
 export class DesktopBoardRegionPresentation implements BoardRegionPresentation {
-  readonly cardHeight = CARD_H;
+  get cardHeight(): number {
+    return battlefieldCardHeight();
+  }
 
   configureSprite(sprite: CardSprite): void {
     sprite.setCompactSquare(false);
@@ -77,8 +79,12 @@ export class DesktopBoardRegionPresentation implements BoardRegionPresentation {
     mirrored: boolean,
     cardScale: number,
   ): PlayZoneRect {
-    const area = playmatGridArea(zone, usableZone, ((CARD_H - CARD_W) * cardScale) / 2);
-    const halfLane = (CARD_H * cardScale) / 2 + COMBAT_ROW_PAD_Y;
+    const area = playmatGridArea(
+      zone,
+      usableZone,
+      (Math.max(0, this.cardHeight - CARD_W) * cardScale) / 2,
+    );
+    const halfLane = (this.cardHeight * cardScale) / 2 + COMBAT_ROW_PAD_Y;
     if (mirrored) {
       const bottom = Math.min(area.y + area.height, zone.y + zone.height - halfLane);
       return { ...area, height: Math.max(1, bottom - area.y) };

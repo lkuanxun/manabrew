@@ -1,6 +1,7 @@
 import { Container, Graphics, Point as PixiPoint, type FederatedPointerEvent } from "pixi.js";
 import type { CardDto, CombatAssignmentDto, PlaymatSettings } from "@/protocol/game";
 import { CardSprite } from "../CardSprite";
+import { ART_CROP_TAP_ANGLE, ART_CROP_TAPPED_ALPHA } from "@/cardDisplay";
 import { BoardZoneTiles, type ZoneTileSpec } from "./BoardZoneTiles";
 import type { BoardRegionPresentation } from "./BoardRegionPresentation";
 import type { BattlefieldState, CombatRowTarget, PlayZoneRect, ScreenPos } from "../types";
@@ -345,9 +346,10 @@ export class BoardRegion {
       occupied.add(cellKey(cell.col, cell.row));
       placements.set(key, { x: cell.x, y: cell.y });
     }
+    const zoneTileHeight = Math.min(CARD_H, this.cardHeight()) * this.cardScale;
     this.zoneTiles.setGeometry(
-      CARD_W * this.cardScale,
-      CARD_H * this.cardScale,
+      (zoneTileHeight * CARD_W) / CARD_H,
+      zoneTileHeight,
       placements,
       this.touchHitPadScreen(),
     );
@@ -775,7 +777,7 @@ export class BoardRegion {
       s.tint = (ch << 16) | (ch << 8) | ch;
       s.alpha = lerp(
         s.alpha,
-        s.card.phasedOut ? COMBAT_DIM_ALPHA : 1,
+        s.card.phasedOut ? COMBAT_DIM_ALPHA : s.card.tapped ? ART_CROP_TAPPED_ALPHA : 1,
         OVERLAY_FADE_LERP,
         SNAP_ALPHA,
       );
@@ -1618,7 +1620,11 @@ export class BoardRegion {
     );
     const orderIdx = state.orderedCardIds?.indexOf(card.id) ?? -1;
     entry.sprite.setOrderBadge(orderIdx >= 0 ? orderIdx + 1 : null);
-    entry.targetRotation = overriddenCard.tapped ? (this.mirrored ? -Math.PI / 2 : Math.PI / 2) : 0;
+    entry.targetRotation = overriddenCard.tapped
+      ? this.mirrored
+        ? -ART_CROP_TAP_ANGLE
+        : ART_CROP_TAP_ANGLE
+      : 0;
     const ownerColor = state.ownerRingByCard?.[card.id];
     entry.sprite.setOwnerRing(ownerColor ? hexToNum(ownerColor) : null);
     entry.sprite.setMustAttack(state.mustAttackCardIds?.includes(card.id) ?? false);
@@ -1828,10 +1834,6 @@ export class BoardRegion {
     this.drawBackground();
     this.zoneTiles.setTheme(this.host.getTheme());
     this.applyCombatRow();
-  }
-
-  restyleCards(): void {
-    for (const entry of this.entries.values()) entry.sprite.restyle();
   }
 
   previewEtb(): void {

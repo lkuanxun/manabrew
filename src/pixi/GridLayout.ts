@@ -66,20 +66,28 @@ export const maxScaleForRows = (
  *  plus `COMBAT_ROW_PAD_Y * 2 + COMBAT_STAGE_PADDING_PX`) exactly fill
  *  `usableH`. Desktop sizes cards with this solve so the band survives as free
  *  grid headroom; attackers stage across the seam instead of inside it. */
-export const scaleForRowsWithCombatRow = (usableH: number, rows: number): number => {
+export const scaleForRowsWithCombatRow = (
+  usableH: number,
+  rows: number,
+  cardHeight: number = CARD_H,
+): number => {
   const bandFixed = COMBAT_ROW_PAD_Y * 2 + COMBAT_STAGE_PADDING_PX;
   return (
     (usableH - bandFixed + GAP - rows * (0.5 + GAP)) /
-    (CARD_H * ((1 + CELL_BREATHING_FRAC) * rows + 1))
+    (cardHeight * ((1 + CELL_BREATHING_FRAC) * rows + 1))
   );
 };
 
 /** Scale at which `rows` whole rows plus half of the shared seam lane (half a
  *  card height plus `COMBAT_ROW_PAD_Y`) exactly fill `usableH`, measured from
  *  the seam. */
-export const scaleForRowsWithHalfLane = (usableH: number, rows: number): number =>
+export const scaleForRowsWithHalfLane = (
+  usableH: number,
+  rows: number,
+  cardHeight: number = CARD_H,
+): number =>
   (usableH - COMBAT_ROW_PAD_Y + GAP - rows * (0.5 + GAP)) /
-  (CARD_H * ((1 + CELL_BREATHING_FRAC) * rows + 0.5));
+  (cardHeight * ((1 + CELL_BREATHING_FRAC) * rows + 0.5));
 
 /** Card scale for the user's size multiplier: 1 (100%) is the largest size
  *  that fits `BATTLEFIELD_MIN_ROWS` rows in the grid area below the lane, and
@@ -90,9 +98,13 @@ export const battlefieldScaleForMultiplier = (
   gridH: number,
   fromSeam: number,
   multiplier: number,
+  cardHeight: number = CARD_H,
 ): number => {
   const fit = (rows: number) =>
-    Math.min(maxScaleForRows(gridH, rows), scaleForRowsWithHalfLane(fromSeam, rows));
+    Math.min(
+      maxScaleForRows(gridH, rows, cardHeight),
+      scaleForRowsWithHalfLane(fromSeam, rows, cardHeight),
+    );
   const base = fit(BATTLEFIELD_MIN_ROWS);
   const max = fit(BATTLEFIELD_MIN_ROWS_LARGEST);
   return Math.max(BATTLEFIELD_CARD_SCALE_FLOOR, Math.min(base * multiplier, max));

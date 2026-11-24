@@ -9,7 +9,7 @@ import {
 import { isFeatureEnabled } from "@/featureFlags";
 import { IRONSMITH_WASM_AVAILABLE } from "@/game/ironsmithWasmAvailable";
 import { relayUsername } from "@/lib/relayUsername";
-import { BattlefieldStylePreview } from "@/components/game/BattlefieldStylePreview";
+import { BattlefieldCardPreview } from "@/components/game/BattlefieldCardPreview";
 import { SoundControls } from "@/components/SoundControls";
 import {
   INLINE_CARD_STYLE_OPTIONS,
@@ -639,8 +639,7 @@ export default function Settings() {
                   </div>
                 </div>
                 <div className="w-[120px] shrink-0 flex justify-center">
-                  <BattlefieldStylePreview
-                    style={prefs.battlefieldCardStyle}
+                  <BattlefieldCardPreview
                     width={Math.round(
                       48 +
                         ((prefs.cardSizeMultiplier - CARD_SIZE_MULTIPLIER_MIN) /
@@ -710,38 +709,6 @@ export default function Settings() {
                 >
                   Locked
                 </Button>
-              </div>
-            </PreferenceCard>
-
-            <PreferenceCard
-              title={`Battlefield Card Style`}
-              description={`Manabrew shows a composed card with current game information. Realistic shows the printed scan. Art-forward uses artwork with compact labels. This setting only affects battlefield cards.`}
-            >
-              <div className="flex flex-wrap items-start gap-4">
-                <div className="flex-1 flex flex-wrap content-start gap-2">
-                  <Button
-                    variant={prefs.battlefieldCardStyle === "realistic" ? "selected" : "outline"}
-                    size="sm"
-                    onClick={() => prefs.setBattlefieldCardStyle("realistic")}
-                  >
-                    Realistic
-                  </Button>
-                  <Button
-                    variant={prefs.battlefieldCardStyle === "art" ? "selected" : "outline"}
-                    size="sm"
-                    onClick={() => prefs.setBattlefieldCardStyle("art")}
-                  >
-                    Art-forward
-                  </Button>
-                  <Button
-                    variant={prefs.battlefieldCardStyle === "frame" ? "selected" : "outline"}
-                    size="sm"
-                    onClick={() => prefs.setBattlefieldCardStyle("frame")}
-                  >
-                    Manabrew
-                  </Button>
-                </div>
-                <BattlefieldStylePreview style={prefs.battlefieldCardStyle} />
               </div>
             </PreferenceCard>
 

@@ -9,7 +9,6 @@ import {
   type BattlefieldCardFaceVariant,
 } from "@/components/game/BattlefieldCardFace";
 import { BoardPlayground } from "@/components/dev/BoardPlayground";
-import { usePreferencesStore } from "@/stores/usePreferencesStore";
 import { ThemeEditorWorkspace } from "@/components/dev/themeEditor/ThemeEditorWorkspace";
 import CardRenderingLab from "@/components/dev/CardRenderingLab";
 import { CardFoilControls } from "@/components/dev/CardFoilControls";
@@ -174,8 +173,7 @@ function GalleryRow({
 }
 
 function CardSpecimens() {
-  const variant = usePreferencesStore((s) => s.battlefieldCardStyle) as GalleryVariant;
-  const setVariant = usePreferencesStore((s) => s.setBattlefieldCardStyle);
+  const [variant, setVariant] = useState<GalleryVariant>("realistic");
   const [showReal, setShowReal] = useState(false);
   return (
     <div className="space-y-4">
